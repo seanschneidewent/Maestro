@@ -309,11 +309,6 @@ tool_definitions = [
             "mission": {"type": "string", "description": "What specifically to verify or extract", "required": True},
         },
     },
-    {
-        "name": "learn",
-        "description": "Learn from feedback. Permanently updates experience.",
-        "params": {"learning_mission": {"type": "string", "required": True}},
-    },
 ]
 
 
@@ -329,4 +324,3 @@ tool_functions = {
     "list_modifications": list_modifications,
     "check_gaps": check_gaps,
 }
-

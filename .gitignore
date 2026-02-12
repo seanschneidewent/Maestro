@@ -6,6 +6,8 @@ knowledge_store/
 
 # Workspaces data (local workspace state)
 workspaces/
+learning_queue/
+learning_status.json
 
 # Python
 __pycache__/
