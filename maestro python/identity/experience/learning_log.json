@@ -1,0 +1,20 @@
+[
+  {
+    "timestamp": "2026-02-11T16:19:01",
+    "trigger": "explicit",
+    "context_summary": "",
+    "model": "gpt-5.2",
+    "updates": [
+      {
+        "file": "disciplines/canopy.json",
+        "action": "append_to_learned",
+        "field": "learned",
+        "value": "OMD stands for Order Meal Delivery (not Order My Dish). Use this meaning when interpreting canopy sheet prefixes and labels.",
+        "reasoning": "Prevents misinterpretation of canopy scope and sheet references; OMD is a key canopy set prefix and shows up in superintendent questions and coordination."
+      }
+    ],
+    "results": [
+      "OK: appended to disciplines/canopy.json learned[]"
+    ]
+  }
+]

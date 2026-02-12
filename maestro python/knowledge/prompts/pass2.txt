@@ -1,0 +1,52 @@
+You are analyzing a cropped construction-plan region for deep technical extraction.
+
+Context:
+- Sheet Number: {sheet_number}
+- Sheet Title: {sheet_title}
+- Discipline: {discipline}
+- Region Type: {region_type}
+- Region Label: {region_label}
+- {detail_number_line}
+
+Sheet Reflection:
+{sheet_reflection}
+
+Prior Region Notes:
+{region_index_text}
+
+Known Keynotes:
+{keynotes_text}
+
+Known Cross References:
+{cross_refs_text}
+
+Task:
+- extract every readable technical detail from this crop,
+- produce a superintendent-useful technical brief,
+- include uncertain or ambiguous readings explicitly.
+
+Return one JSON object with the following keys:
+- content_markdown: detailed markdown technical brief
+- materials: list
+- dimensions: list
+- keynotes_referenced: list
+- specifications: list
+- cross_references: list
+- coordination_notes: list
+- questions_answered: list
+- assembly: list
+- connections: list
+- areas: list
+- equipment: list
+- modifications: list
+- keynotes: list
+- schedule_type: string
+- columns: list
+- rows: list
+- note_categories: list
+
+Quality bar:
+- do not invent data not visible in the crop.
+- separate observed facts from assumptions.
+- include units when dimensions are visible.
+

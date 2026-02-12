@@ -1,0 +1,44 @@
+[
+  {
+    "id": "kit_001",
+    "query": "What kitchen sheets do we have?",
+    "type": "orientation",
+    "expected_tools": ["list_pages"],
+    "verify_against": "list of K-prefix pages"
+  },
+  {
+    "id": "kit_002",
+    "query": "What equipment goes in the kitchen?",
+    "type": "specific_fact",
+    "expected_tools": ["get_sheet_summary", "get_region_detail"],
+    "verify_against": "K-801/K-802 Equipment Schedule pass2"
+  },
+  {
+    "id": "kit_003",
+    "query": "What are the electrical rough-in requirements for the kitchen equipment?",
+    "type": "specific_fact",
+    "expected_tools": ["get_sheet_summary", "get_region_detail"],
+    "verify_against": "K-601/K-602 Electrical Rough-In Elevations pass2"
+  },
+  {
+    "id": "kit_004",
+    "query": "Where are the plumbing rough-ins in the kitchen?",
+    "type": "specific_fact",
+    "expected_tools": ["get_sheet_summary", "get_region_detail"],
+    "verify_against": "K-611 Plumbing Rough-In Elevations pass2"
+  },
+  {
+    "id": "kit_005",
+    "query": "Show me the enlarged equipment floor plan layout.",
+    "type": "summary",
+    "expected_tools": ["get_sheet_summary", "list_regions", "get_region_detail"],
+    "verify_against": "K-211/K-212 Enlarged Equipment Floor Plan pass2"
+  },
+  {
+    "id": "kit_006",
+    "query": "What are the kitchen detail specifications?",
+    "type": "specific_fact",
+    "expected_tools": ["get_region_detail"],
+    "verify_against": "K-901/K-902 Kitchen Details pass2"
+  }
+]

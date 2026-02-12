@@ -1,0 +1,58 @@
+[
+  {
+    "id": "mep_001",
+    "query": "What MEP sheets do we have?",
+    "type": "orientation",
+    "expected_tools": ["list_pages"],
+    "verify_against": "list of M/E/P-prefix pages"
+  },
+  {
+    "id": "mep_002",
+    "query": "What panel boards are on this project and what do they feed?",
+    "type": "specific_fact",
+    "expected_tools": ["get_sheet_summary", "get_region_detail"],
+    "verify_against": "E-002 panel board schedules pass2"
+  },
+  {
+    "id": "mep_003",
+    "query": "What's getting demolished on the mechanical plans?",
+    "type": "specific_fact",
+    "expected_tools": ["get_sheet_summary", "list_regions", "get_region_detail"],
+    "verify_against": "M101 Demo Floor Plan + M102 Demo Roof Plan pass2"
+  },
+  {
+    "id": "mep_004",
+    "query": "Where does the plumbing waste and vent route?",
+    "type": "specific_fact",
+    "expected_tools": ["get_sheet_summary", "get_region_detail"],
+    "verify_against": "P-801 Plumbing Waste and Vent Riser pass2"
+  },
+  {
+    "id": "mep_005",
+    "query": "What HVAC equipment is specified?",
+    "type": "specific_fact",
+    "expected_tools": ["search", "get_region_detail"],
+    "verify_against": "M103/M104 floor/roof plan pass2 + M501/M502 details"
+  },
+  {
+    "id": "mep_006",
+    "query": "What's the lighting plan for the building?",
+    "type": "summary",
+    "expected_tools": ["get_sheet_summary", "list_regions", "get_region_detail"],
+    "verify_against": "E-203/E203 Lighting Plan pass2"
+  },
+  {
+    "id": "mep_007",
+    "query": "What electrical work is needed for the F2F canopy?",
+    "type": "cross_cutting",
+    "expected_tools": ["search", "get_sheet_summary", "get_region_detail"],
+    "verify_against": "E-201 F2F Canopy Enlarged Plan pass2"
+  },
+  {
+    "id": "mep_008",
+    "query": "Does the project pass energy code? What does the comcheck say?",
+    "type": "specific_fact",
+    "expected_tools": ["search", "get_region_detail"],
+    "verify_against": "E-903 Comcheck + M907 Comcheck pass2"
+  }
+]

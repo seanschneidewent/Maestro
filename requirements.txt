@@ -1,0 +1,8 @@
+google-genai
+google-generativeai
+openai
+anthropic
+python-dotenv
+PyMuPDF
+Pillow
+

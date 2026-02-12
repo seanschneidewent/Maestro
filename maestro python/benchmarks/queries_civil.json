@@ -1,0 +1,58 @@
+[
+  {
+    "id": "civ_001",
+    "query": "What civil sheets do we have?",
+    "type": "orientation",
+    "expected_tools": ["list_pages"],
+    "verify_against": "list of C/L-prefix pages"
+  },
+  {
+    "id": "civ_002",
+    "query": "What are the existing site conditions?",
+    "type": "summary",
+    "expected_tools": ["get_sheet_summary", "get_region_detail"],
+    "verify_against": "C04.01 EX COND pass1+pass2"
+  },
+  {
+    "id": "civ_003",
+    "query": "What's the paving section detail?",
+    "type": "specific_fact",
+    "expected_tools": ["get_sheet_summary", "get_region_detail"],
+    "verify_against": "C06.50-C06.54 paving detail pass2 — thicknesses, materials"
+  },
+  {
+    "id": "civ_004",
+    "query": "How many phases of traffic control are there?",
+    "type": "specific_fact",
+    "expected_tools": ["search", "get_sheet_summary"],
+    "verify_against": "C14.60 TCP PH1, C14.61 TCP PH2 pass1"
+  },
+  {
+    "id": "civ_005",
+    "query": "Where do the storm drains connect?",
+    "type": "specific_fact",
+    "expected_tools": ["get_sheet_summary", "get_region_detail"],
+    "verify_against": "C08.01/C08.02 DAM + C10.01 WTR-WW pass2"
+  },
+  {
+    "id": "civ_006",
+    "query": "What landscape is planned for the site?",
+    "type": "summary",
+    "expected_tools": ["get_sheet_summary", "list_regions"],
+    "verify_against": "L1.0 Landscape Plan pass1+pass2"
+  },
+  {
+    "id": "civ_007",
+    "query": "What erosion control measures are required?",
+    "type": "specific_fact",
+    "expected_tools": ["get_sheet_summary", "get_region_detail"],
+    "verify_against": "C11.01 Erosion Control + C11.50 ER CTRL DTL pass2"
+  },
+  {
+    "id": "civ_008",
+    "query": "What's getting demolished on the civil plans?",
+    "type": "specific_fact",
+    "expected_tools": ["get_sheet_summary", "get_region_detail"],
+    "verify_against": "C04.02 DEMO pass2"
+  }
+]

@@ -1,0 +1,955 @@
+[
+  {
+    "id": "arch_001",
+    "engine": "opus",
+    "query": "What architectural sheets do we have?",
+    "query_type": "orientation",
+    "response": "Here's a rundown of all **30 Architectural sheets** in the set:\n\n### Core A-Series (Building)\n| Sheet | Description | Details |\n|-------|-------------|---------|\n| **A000** | Egress Plan | 6 regions |\n| **A002** | Demolition RCP | 6 regions |\n| **A101** | Floor Plan | 11 regions |\n| **A102** | Roof Plan | 6 regions |\n| **A103** | Roof Details | 8 regions |\n| **A111** | Floor Finish Plan & Schedules | 10 regions |\n| **A201** | Reflected Ceiling Plan | 6 regions |\n| **A301** | Exterior Elevations | 10 regions |\n| **A401** | Details | 12 regions |\n| **A402** | Wall Sections | 3 regions |\n| **A601** | Interior Elevations | 10 regions |\n| **A801** | Door & Window Schedule/Details | 11 regions |\n\n### Specifications (A901–A908)\nEight spec sheets covering material and installation requirements — these are the ones keynotes reference throughout the set.\n\n### AS-Series (Site & Canopies)\n| Sheet | Description |\n|-------|-------------|\n| **AS0.0** | Architectural Site Plan |\n| **AS1.1** | F2F Canopy Plan |\n| **AS1.2** | F2F Canopy Elevations |\n| **AS2.1** | OMD Canopy Plan |\n| **AS2.2** | OMD Canopy Elevations |\n| **AS3.1** | Patio Canopy |\n| **AS4.1** | Refuse Enclosure Plan |\n| **AS4.2** | Refuse Enclosure Details |\n\n### Other\n| Sheet | Description |\n|-------|-------------|\n| **F2F-EL1** | F2F Canopy Elevations (additional) |\n| **T101** | Title Sheet |\n\nThat's a solid set. Want me to dive into any specific sheet?",
+    "response_time_s": 10.45,
+    "response_length": 1426,
+    "tools_called": [
+      {
+        "tool": "list_pages",
+        "args": {
+          "discipline": "Architectural"
+        },
+        "time_s": 0.0
+      }
+    ],
+    "tool_count": 1,
+    "tool_names": [
+      "list_pages"
+    ],
+    "asked_question_instead": false
+  },
+  {
+    "id": "arch_002",
+    "engine": "opus",
+    "query": "Give me an overview of the egress plan.",
+    "query_type": "summary",
+    "response": "Here's your egress plan overview from **Sheet A000** (scale 1/4\" = 1'-0\"):\n\n---\n\n## Egress Plan Overview — Chick-fil-A Love Field\n\n### Egress Routes\n- **Accessible routes** are shown as gray shaded paths — all must maintain a **minimum 36\" clear width**.\n- **Travel distances** called out on the plan:\n  - **60'-9½\"** diagonal across the existing kitchen\n  - **21'-0½\"** near the pick-up area\n\n### Exit Signage\n- **Existing exit signs** are staying in place (shown as circle with filled right quadrant)\n- **New directional exit sign** being added at the **Drive-Thru Cockpit** (circle with filled bottom quadrant)\n\n### Room Layout & Modifications\n| Status | Spaces |\n|---|---|\n| **New (N)** | Freezer, Office, Catering Area |\n| **Modified** | Drive-Thru, Cooler, Serving Area |\n| **Existing (E)** | Kitchen, Hallway, 3 Restrooms, Office, Service Yard |\n\n### 10 Accessibility Notes — Key Dimensions to Watch\n1. **Cross slopes** on accessible routes: **2% max**\n2. **Overhead obstructions** (umbrellas/awnings): **6'-8\" min** above finished grade\n3. **Accessible tables**: **27\" min knee space**, **19\" min depth**, **34\" tabletop height** (all AFF)\n4. **Coat hooks**: **48\" AFF** (accessible stalls), **60\" AFF** (standard stalls)\n5. **Flush valves**: Wide side of stall, **≤5 lbs** operating force\n6. **Panic hardware**: **46\" max AFF**\n7. **Kitchen floor drains**: Outside path of travel, floor slope **≤2%** on accessible routes\n8. **Floor transitions/thresholds**: **½\" max height**, beveled at **1:2 slope max**\n9. **Switches/controls** in public areas: **48\" max AFF** (U.N.O.)\n10. Contact Architect of Record for clarifications\n\n### Cross-Reference\n- Sheet **AS2.1** is referenced for the proposed **OMD canopy** layout\n\n### Coordination Heads-Up\n- **Verify 36\" clear** at every egress path — especially through the modified drive-thru and serving areas where new work could pinch clearances.\n- **New exit sign at the Drive-Thru Cockpit** — coordinate with electrical for power/mounting.\n- **Kitchen floor drains** must stay out of the accessible travel path — coordinate with plumbing.\n- **Threshold transitions** between new and existing flooring can't exceed ½\" — coordinate with the floor finish plan on **A111**.\n\nWant me to dig into any specific egress path, the door schedule, or cross-check against the floor plan on A101?",
+    "response_time_s": 27.52,
+    "response_length": 2336,
+    "tools_called": [
+      {
+        "tool": "search",
+        "args": {
+          "query": "egress"
+        },
+        "time_s": 0.003
+      },
+      {
+        "tool": "search",
+        "args": {
+          "query": "exit door"
+        },
+        "time_s": 0.002
+      },
+      {
+        "tool": "list_pages",
+        "args": {
+          "discipline": "Architectural"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_sheet_summary",
+        "args": {
+          "page_name": "A000_Egress_Plan_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "list_regions",
+        "args": {
+          "page_name": "A000_Egress_Plan_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "find_cross_references",
+        "args": {
+          "page_name": "A000_Egress_Plan_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A000_Egress_Plan_p001",
+          "region_id": "r_140_510_780_810"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A000_Egress_Plan_p001",
+          "region_id": "r_610_35_765_245"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A000_Egress_Plan_p001",
+          "region_id": "r_775_35_895_155"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A000_Egress_Plan_p001",
+          "region_id": "r_570_855_655_895"
+        },
+        "time_s": 0.0
+      }
+    ],
+    "tool_count": 10,
+    "tool_names": [
+      "search",
+      "list_pages",
+      "get_sheet_summary",
+      "list_regions",
+      "find_cross_references",
+      "get_region_detail"
+    ],
+    "asked_question_instead": false
+  },
+  {
+    "id": "arch_003",
+    "engine": "opus",
+    "query": "What's getting demolished on the demolition RCP?",
+    "query_type": "specific_fact",
+    "response": "Here's the full breakdown of what's getting demo'd on **Sheet A002 — Demolition RCP**:\n\n---\n\n### Demolition Items\n- **Existing LED lights marked for removal** — shown with the concentric arc symbol on the plan, scattered across several rooms\n- **Canopy structure elements** — dashed lines with keynotes (Circle 1, Circle 5) indicate demolition work at the canopy/order window area\n- **Ceiling fixtures** — various rectangular and circular fixtures (lighting & HVAC diffusers) tagged with keynotes for removal\n\n### Relocations\n- **Patio fans & heaters (Keynote 8)** — existing units to be relocated to the **new exterior patio seating area** *(flagged as Revision A)*\n- **Air curtains (Keynote 7)** — existing air curtain to remain *(also tied to Revision A)*\n\n### What Stays (Protect in Place)\n- **All existing ceilings** remain unless noted otherwise (U.N.O.)\n- **Existing exterior lighting** remains U.N.O.\n- **Existing awnings & entry canopy (Keynote 6)** — remain, contractor must protect during construction\n- **Existing exterior soffit (Keynote 5)** — remains, must be protected\n- **Existing exit lights** — remain U.N.O.\n- **Existing LED lights marked \"to remain\"** — shown with double-ring symbol\n\n### Existing Ceiling Heights (for reference)\n| Room | Ceiling Height |\n|------|---------------|\n| Drive Thru | 10'-0\" |\n| Serving Area | 10'-0\" |\n| Kitchen | 10'-2\" |\n| Restrooms | 10'-0\" |\n| Office | 10'-2\" |\n| Service | 10'-2\" |\n| Drive Thru (small north section) | 8'-0\" |\n\n### Front of House Maintenance Notes\n- Replace any **damaged ceiling tiles** in F.O.H.\n- Replace any **damaged light fixtures** in F.O.H.\n- Clean or replace any **dirty HVAC grilles** in F.O.H.\n\n---\n\n**⚠️ Coordination heads-up:**\n- Check **Mechanical sheets** for clarification on new vs. existing supply/return diffusers before demo.\n- GC needs to coordinate **security camera scope** with the Owner Rep.\n- Any **fire sprinkler alterations** need to reference fire sprinkler shop drawings.\n- Air curtain install must follow **manufacturer spec sheets**.\n\nWant me to cross-reference this with the electrical or mechanical demo plans to make sure everything lines up?",
+    "response_time_s": 24.51,
+    "response_length": 2149,
+    "tools_called": [
+      {
+        "tool": "search",
+        "args": {
+          "query": "demolition RCP reflected ceiling plan"
+        },
+        "time_s": 0.007
+      },
+      {
+        "tool": "search",
+        "args": {
+          "query": "demolition ceiling"
+        },
+        "time_s": 0.005
+      },
+      {
+        "tool": "list_pages",
+        "args": {
+          "discipline": "Architectural"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_sheet_summary",
+        "args": {
+          "page_name": "A002_Demolition_RCP_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "list_regions",
+        "args": {
+          "page_name": "A002_Demolition_RCP_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A002_Demolition_RCP_p001",
+          "region_id": "r_20_490_860_950"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A002_Demolition_RCP_p001",
+          "region_id": "r_90_75_410_215"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A002_Demolition_RCP_p001",
+          "region_id": "r_760_75_995_215"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A002_Demolition_RCP_p001",
+          "region_id": "r_420_75_750_215"
+        },
+        "time_s": 0.0
+      }
+    ],
+    "tool_count": 9,
+    "tool_names": [
+      "search",
+      "list_pages",
+      "get_sheet_summary",
+      "list_regions",
+      "get_region_detail"
+    ],
+    "asked_question_instead": false
+  },
+  {
+    "id": "arch_004",
+    "engine": "opus",
+    "query": "What are the travel distances on the egress plan?",
+    "query_type": "specific_fact",
+    "response": "Here's what's on the Egress Plan (**Sheet A000**):\n\n---\n\n### Travel Distances\n\n1. **60'-9 ½\"** — Diagonal travel distance across the **(E) Kitchen** area\n2. **21'-0 ½\"** — Vertical travel distance segment near the **Pick-Up** area\n\nThese are the two travel distance callouts shown on the plan.\n\n---\n\n### Other Key Egress Requirements (same sheet)\n\n- **Accessible route minimum clear width:** 36\"\n- **Maximum cross slope on accessible routes:** 2%\n- **Egress paths** are shown as gray shaded areas with directional arrows\n- **Exit signage** — both new (at Drive Thru Cockpit) and existing locations are called out\n\n### Heads Up\n- Make sure all egress paths actually maintain that **36\" clear** through the modified areas (Modified Drive Thru, Modified Serving Area, Modified Cooler) — those are the spots most likely to get pinched during construction.\n- The plan references **Sheet AS2.1** for the OMD canopy, so if egress routes pass near that canopy area, coordinate accordingly.\n\nWant me to pull the accessibility notes in more detail or cross-check anything against the floor plan on A101?",
+    "response_time_s": 21.78,
+    "response_length": 1093,
+    "tools_called": [
+      {
+        "tool": "search",
+        "args": {
+          "query": "egress travel distance"
+        },
+        "time_s": 0.007
+      },
+      {
+        "tool": "list_pages",
+        "args": {
+          "discipline": "Architectural"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_sheet_summary",
+        "args": {
+          "page_name": "A000_Egress_Plan_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "list_regions",
+        "args": {
+          "page_name": "A000_Egress_Plan_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A000_Egress_Plan_p001",
+          "region_id": "r_140_510_780_810"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A000_Egress_Plan_p001",
+          "region_id": "r_775_35_895_155"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A000_Egress_Plan_p001",
+          "region_id": "r_610_35_765_245"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "see_pointer",
+        "args": {},
+        "time_s": 0,
+        "skipped": true
+      }
+    ],
+    "tool_count": 8,
+    "tool_names": [
+      "search",
+      "list_pages",
+      "get_sheet_summary",
+      "list_regions",
+      "get_region_detail",
+      "see_pointer"
+    ],
+    "asked_question_instead": false
+  },
+  {
+    "id": "arch_005",
+    "engine": "opus",
+    "query": "What door hardware sets are specified in the door schedule?",
+    "query_type": "specific_fact",
+    "response": "Here's the full breakdown of the door hardware sets specified in the door schedule:\n\n---\n\n### Door Hardware Sets — Sheet A801\n\nThere are **3 hardware sets** specified:\n\n#### **Set #1 — Storefront Entry**\n- **Used on:** Doors 2 & 3 (3'-0\" × 7'-0\" aluminum/glass doors)\n- **Components:** Pull handle, exit device, rim cylinder, door closer, continuous hinge, threshold, door sweeps, floor stop, **electric strike**\n- **Electric strike options:** HES 9400 (YKK) or HES 7089 (Kawneer)\n- **Finish note:** Kawneer pull specified as Clear Anodized\n\n#### **Set #05 — Dining Exit-Only (Single)**\n- **Used on:** Door 4 (3'-0\" × 7'-0\" aluminum/glass)\n- **Components:** Exit device, door closer, continuous hinge, threshold, rim cylinder, door sweep, floor stop\n- **No pull handle or electric strike** — consistent with exit-only function\n\n#### **Set #09 — Office**\n- **Used on:** Interior/office doors (Door Type 2 with keypad)\n- **Supplier:** Locknet or DH Pace\n- **Components:**\n  - **Hinges:** McKinney TA2714, 4-1/2\" × 4-1/2\", NRP, US26D (qty: 3)\n  - **Closer:** Sargent 351 CPSH EN (qty: 1)\n  - **Kick plate:** Rockwood K1050, 36\"h × 34\"w, US32D (qty: 1)\n  - **Silencers:** Rockwood 608 (qty: 3)\n  - **Wall stop:** Rockwood 403, US26D (qty: 1)\n  - **Keypad lock:** Sargent 21 28-KP10G77 LL, US26D, master-keyed\n\n#### **Door 1 (Tormax Sliding System)**\n- 7'-0\" × 7'-8\" bi-parting slider — **all hardware deferred to Tormax shop drawings** per Spec Section 20-21.21\n\n---\n\n### ⚠️ Coordination Flags:\n1. **YKK vs. Kawneer** — Sets #1 and #05 have dual options. Make sure hardware matches whichever storefront manufacturer is selected.\n2. **Keypad lock quantity** in Set #09 is blank in the schedule — verify with the hardware supplier (likely 1 per leaf).\n3. **Hardware is owner-furnished (National Accounts via Locknet)** but **GC-installed** per A907 specs. Coordinate delivery timing.\n4. **Mixed finishes** across sets: US26D (Satin Chrome), US32D (Satin Stainless), Clear Anodized, EN (Aluminum Enamel) — confirm that's intentional with the architect.",
+    "response_time_s": 30.66,
+    "response_length": 2045,
+    "tools_called": [
+      {
+        "tool": "search",
+        "args": {
+          "query": "door schedule hardware sets"
+        },
+        "time_s": 0.002
+      },
+      {
+        "tool": "search",
+        "args": {
+          "query": "door hardware"
+        },
+        "time_s": 0.002
+      },
+      {
+        "tool": "search",
+        "args": {
+          "query": "door schedule"
+        },
+        "time_s": 0.004
+      },
+      {
+        "tool": "get_sheet_summary",
+        "args": {
+          "page_name": "A907_Specifications_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A907_Specifications_p001",
+          "region_id": "r_260_130_630_280"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A907_Specifications_p001",
+          "region_id": "r_40_290_600_580"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A907_Specifications_p001",
+          "region_id": "r_600_900_1000_1000"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_sheet_summary",
+        "args": {
+          "page_name": "A801_Door_Window_Schedule_Details_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A801_Door_Window_Schedule_Details_p001",
+          "region_id": "r_350_18_895_150"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A801_Door_Window_Schedule_Details_p001",
+          "region_id": "r_385_435_545_565"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "list_regions",
+        "args": {
+          "page_name": "A801_Door_Window_Schedule_Details_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A801_Door_Window_Schedule_Details_p001",
+          "region_id": "r_102_18_348_265"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A801_Door_Window_Schedule_Details_p001",
+          "region_id": "r_560_285_875_465"
+        },
+        "time_s": 0.0
+      }
+    ],
+    "tool_count": 13,
+    "tool_names": [
+      "search",
+      "get_sheet_summary",
+      "get_region_detail",
+      "list_regions"
+    ],
+    "asked_question_instead": false
+  },
+  {
+    "id": "arch_006",
+    "engine": "opus",
+    "query": "What type of roof system is specified?",
+    "query_type": "specific_fact",
+    "response": "Here's the full picture on the roof system:\n\n---\n\n## Roof System — Duro-Last 50 Mil Single-Ply Membrane\n\n**Per sheets A102 (Roof Plan) and A103 (Roof Details):**\n\n### Assembly (Top to Bottom):\n1. **Membrane:** Duro-Last **white, 50 mil single-ply membrane** — mechanically fastened per manufacturer's written instructions (ref. Durolast Detail #6061)\n2. **Insulation:** **2\" polyisocyanurate rigid insulation** — fastened with approved fasteners and distribution plates per Duro-Last specs\n3. **Deck:** **Plywood roof deck** (refer to Structural for sizing)\n4. **Framing:** Roof framing varies — refer to Structural drawings\n\n### Key Details:\n- **Slope:** Crickets must maintain **minimum 1/8\" per foot**\n- **Flashing height at walls:** **12\" minimum** at parapets (Detail 3, A103)\n- **Flashing height at equipment:** **12\"–14\" minimum**\n- **Penetration flashing:** Minimum **8\" height**, with **stainless steel band 1/4\" from top**, sealant all sides (Detail 6, A103)\n- **Scuppers:** Durolast prefabricated — primary (Detail #2070) and overflow set **2\" above roof surface** (Detail #2060), metal finish to match **Paint #9**\n- **Field welds** required at all membrane-to-flashing transitions\n\n### Equipment Stands:\n- **AVCOA Corporation aluminum stands** — minimum **18\" clearance** above roof\n- Cooler/freezer condensers: Two 7' rails @ 32\" O.C., 3 supports each\n- Ice maker condensers: Two 5' rails @ 32\" O.C., 3 supports each\n\n### Warranty Note:\nA **Duro-Last QA specialist will inspect** upon completion. Deficiencies must be corrected within **5 working days**. All punch list items completed within **10 working days** of receipt.\n\n---\n\n**Bottom line:** It's a Duro-Last 50 mil white single-ply system over 2\" polyiso on plywood deck — mechanically fastened, not adhered. All prefab accessories (scuppers, curbs, penetration boots) are Durolast system components to maintain the warranty.",
+    "response_time_s": 26.99,
+    "response_length": 1896,
+    "tools_called": [
+      {
+        "tool": "search",
+        "args": {
+          "query": "roof system"
+        },
+        "time_s": 0.005
+      },
+      {
+        "tool": "search",
+        "args": {
+          "query": "roofing membrane"
+        },
+        "time_s": 0.002
+      },
+      {
+        "tool": "search",
+        "args": {
+          "query": "roof assembly"
+        },
+        "time_s": 0.004
+      },
+      {
+        "tool": "get_sheet_summary",
+        "args": {
+          "page_name": "A102_Roof_Plan_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_sheet_summary",
+        "args": {
+          "page_name": "A103_Roof_Details_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A103_Roof_Details_p001",
+          "region_id": "r_340_35_600_355"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A103_Roof_Details_p001",
+          "region_id": "r_85_35_270_355"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A103_Roof_Details_p001",
+          "region_id": "r_130_450_335_630"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A103_Roof_Details_p001",
+          "region_id": "r_625_35_855_355"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A103_Roof_Details_p001",
+          "region_id": "r_360_400_530_630"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A102_Roof_Plan_p001",
+          "region_id": "r_350_40_530_500"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A102_Roof_Plan_p001",
+          "region_id": "r_790_40_890_530"
+        },
+        "time_s": 0.0
+      }
+    ],
+    "tool_count": 12,
+    "tool_names": [
+      "search",
+      "get_sheet_summary",
+      "get_region_detail"
+    ],
+    "asked_question_instead": false
+  },
+  {
+    "id": "arch_007",
+    "engine": "opus",
+    "query": "What are the exterior wall materials shown on the elevations?",
+    "query_type": "specific_fact",
+    "response": "Here's your full rundown on exterior wall materials from **Sheet A301 (Exterior Elevations)**:\n\n---\n\n## Exterior Wall Materials — A301\n\n### 1. Brick (Masonry) — Two Types\n| Code | Color | Product | Notes |\n|------|-------|---------|-------|\n| **BR-1** | Red Velour | Acme Crimson (or equivalent) | Primary brick |\n| **BR-2** | Tan | Acme Desert Tan (or equivalent) | Requires **Holcim \"Designer Tan\" mortar** |\n\n- New **rowlock** (Keynote 13) and **soldier courses** (Keynote 14) must match existing conditions.\n\n### 2. Storefront System (ST-1)\n- **Manufacturer:** YKK — YES 45 system\n- **Finish:** Dark Bronze (Matte)\n- Includes **spandrel glass** where indicated (Keynote 7)\n\n### 3. Metal Panels (MP-1)\n- **Manufacturer:** Nichiha — Ilumination Series\n- **Color:** Red\n\n### 4. Hardie Soffits & Panels\n- Shown as **horizontal lap siding** on the North West and other elevations (visible as horizontal parallel lines in the elevation drawings)\n- Appears to be fiber-cement products (James Hardie)\n\n### 5. Canopy & Steel Elements\n- New **steel canopy** (Keynote 9) and **four new steel columns** (Keynote 12) — coordinate with structural drawings\n- Existing steel canopy to remain (Keynote 5)\n- Existing decorative steel channels and guardrails to be **protected in place** (Keynotes 20, 25)\n\n---\n\n## Key Dimensions (Vertical Control)\n| Reference | Height |\n|-----------|--------|\n| Top Plate (Main) | **20'-7\"** |\n| Top Plate (Lower) | **19'-3 1/2\"** |\n| B.O. Canopy | **9'-8\"** |\n| Finish Slab | **0'-0\"** |\n\n## Critical Construction Notes\n- **Blocking required** for all exterior wall-mounted light fixtures, awnings, and signs (General Note 2)\n- **All exposed wood and metals** must be painted (General Note 3)\n- Refer to **civil drawings** for finish grades and walk locations\n- Wall section detail **1/A402** shows the full assembly: exterior cladding → wood framing → batt insulation → interior finish\n\nWant me to dig into any specific material — like the Nichiha panel details, the storefront flashing (Detail 5/A301), or the spec sheets for any of these?",
+    "response_time_s": 28.71,
+    "response_length": 2062,
+    "tools_called": [
+      {
+        "tool": "list_pages",
+        "args": {
+          "discipline": "Architectural"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "search",
+        "args": {
+          "query": "exterior wall materials elevations"
+        },
+        "time_s": 0.005
+      },
+      {
+        "tool": "get_sheet_summary",
+        "args": {
+          "page_name": "A301_Exterior_Elevations_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "list_regions",
+        "args": {
+          "page_name": "A301_Exterior_Elevations_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_sheet_summary",
+        "args": {
+          "page_name": "A402_Wall_Sections_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "list_regions",
+        "args": {
+          "page_name": "A402_Wall_Sections_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "search",
+        "args": {
+          "query": "exterior wall cladding material finish"
+        },
+        "time_s": 0.004
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A301_Exterior_Elevations_p001",
+          "region_id": "r_580_735_985_905"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A301_Exterior_Elevations_p001",
+          "region_id": "r_35_585_245_735"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A301_Exterior_Elevations_p001",
+          "region_id": "r_245_585_355_735"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A301_Exterior_Elevations_p001",
+          "region_id": "r_25_735_445_905"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A301_Exterior_Elevations_p001",
+          "region_id": "r_735_70_985_880"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A402_Wall_Sections_p001",
+          "region_id": "r_610_480_920_980"
+        },
+        "time_s": 0.0
+      }
+    ],
+    "tool_count": 13,
+    "tool_names": [
+      "list_pages",
+      "search",
+      "get_sheet_summary",
+      "list_regions",
+      "get_region_detail"
+    ],
+    "asked_question_instead": false
+  },
+  {
+    "id": "arch_008",
+    "engine": "opus",
+    "query": "What floor finishes are called out on A111?",
+    "query_type": "specific_fact",
+    "response": "No worries — between the schedules and the finish plan, here's what I've got for you:\n\n---\n\n## Floor Finishes on A111\n\n**Sheet A111** is the **Finish Plan** for Chick-fil-A Love Field. Here are the floor finishes called out:\n\n### Floor Tile\n| Code | Product | Size | Grout | Joint Width |\n|------|---------|------|-------|-------------|\n| **KT-1A** | Creative Materials Corp, **Red 308** | 8\" x 8\" | G-3 (Mapei Kerapoxy IEG CQ, 47 Charcoal) | 3/8\" |\n| **KT-1B** | Kitchen Tile (B variant) | — | G-3 | — |\n\n### Floor Grout\n| Code | Product | Color | Used With |\n|------|---------|-------|-----------|\n| **G-1** | Mapei Ultra Color Grout | 47 Charcoal | T-3, T-4 |\n| **G-3** | Mapei Kerapoxy IEG CQ (epoxy) | 47 Charcoal | KT-1A, KT-1B |\n\n### Installation\n- **Standard thinset mortar** is called out for tile installation.\n\n### Where Each Finish Goes (per the Finish Plan):\n- **KT-1A** — Kitchen areas, modified cooler (extend to match existing), new office\n- **KT-1B** — New catering area, new office\n- **Existing floor finishes to remain** — Existing kitchen & hallway areas, with a note: *\"Patch and repair for any damages under construction\"*\n- **Modified Serving Area** — New tile finishes at the new concrete curb (curb dims: 8'-7\" x 2'-5½\" return, 6'-10½\" x 2'-7\" return)\n- **Modified Cooler** — \"Extend flooring to match existing\" using KT-1A\n\n### ⚠️ Heads Up for Your Crew:\n1. **Epoxy grout (G-3)** is specified for all kitchen tile — that's a different install process than standard grout. Make sure your tile guys know.\n2. **Transitions** between existing floors and new tile need to be tight — check Detail 3 (Typ. Interior Threshold) on this same sheet for the transition detail.\n3. **Protect existing finishes** that are staying — any damage means you're matching and repairing.\n4. **Cooler screed detail** (Detail 2 on this sheet) — check it for the floor transition into the cooler.\n\nWant me to dig into the threshold or cooler screed details?",
+    "response_time_s": 25.1,
+    "response_length": 1957,
+    "tools_called": [
+      {
+        "tool": "get_sheet_summary",
+        "args": {
+          "page_name": "A111"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_sheet_index",
+        "args": {
+          "page_name": "A111"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "list_regions",
+        "args": {
+          "page_name": "A111"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A111",
+          "region_id": "r_450_30_675_120"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A111",
+          "region_id": "r_20_30_450_300"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A111",
+          "region_id": "r_140_650_850_950"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "see_pointer",
+        "args": {},
+        "time_s": 0,
+        "skipped": true
+      }
+    ],
+    "tool_count": 7,
+    "tool_names": [
+      "get_sheet_summary",
+      "get_sheet_index",
+      "list_regions",
+      "get_region_detail",
+      "see_pointer"
+    ],
+    "asked_question_instead": false
+  },
+  {
+    "id": "arch_009",
+    "engine": "opus",
+    "query": "Tell me about the refuse enclosure - what are the details?",
+    "query_type": "summary",
+    "response": "Here's the full rundown on the refuse enclosure:\n\n---\n\n## Refuse Enclosure — Full Breakdown\n\n### Overall Layout *(Sheet AS4.1)*\n- **Total footprint:** 34'-0\" wide\n- **Main refuse area:** 26'-0\" wide (25'-4\" clear interior), 10'-0\" deep\n- **Storage room:** 8'-0\" wide (~7'-0\" clear interior)\n- **Wall height:** 8'-8\" T.O. CMU (from grade); net wall 8'-2\" from T.O. slab\n- **Slab/Curb:** 6\" above grade (T.O. Slab at +0'-6\")\n- **6\" concrete curb** at interior perimeter of the main refuse area\n\n### Gates *(AS4.1, AS4.2)*\n- **Four gate sections**, each **6'-4\" wide**\n- **Gate panels:** 16 GA form deck (metal deck infill)\n- **Gate posts:** 6\" steel pipe with caps, Dark Bronze finish (PT-113)\n- **4'-0\" Unistrut** at top of gate assembly\n- **Drop rod detail** on AS4.2 (Detail 6)\n- **1-1/4\"Ø drilled holes** in concrete drive for gate pins\n\n### Storage Room Door — Door 101 *(AS4.2)*\n- **Size:** 3'-8\" W × 7'-0\" H × 1-3/4\" thick\n- **Type 5:** Insulated hollow metal door in welded HM frame\n- **Finish:** Dark Bronze (PT-113)\n- **Hardware Set #13** includes: piano hinge, Sargent lockset, lock guard, Pemko threshold/sweep/weatherstripping, Sargent 351 closer, Rockwood kick plate (12\"h × 40\"w)\n- **9\" × 9\" louver**, 16\" AFF to bottom of louver\n\n### Wall Construction *(AS4.1, AS4.2, S5.1, S5.2)*\n- **8\" CMU** — split-face on exterior, smooth-face top course\n- **Painted** — exterior PT-100 (Rookwood Medium Brown), interior PT-31A\n- **#5 vertical rebar at 24\" O.C.** with solid grouted cells at reinforcement\n- **Continuous bond beams** at top of walls\n- **Block filler** required on split-face surfaces\n- **Seal/waterproof** below-grade block before backfilling\n\n### Structural Foundation *(S5.1, S5.2)*\n- **Slab:** 6\" thick, #4 bars at 18\" O.C., 6 mil vapor barrier underneath\n- **Wall footings (Detail 303):** 3'-6\" wide min., 1'-6\" deep min., 2'-0\" min. to bottom from grade, 3\" rebar clearance\n- **Bollard footings (Detail 302):** 1'-6\" wide, **5'-0\" deep minimum** from T.O. slab — 6\" clearance from pipe bottom to footing bottom\n- **Gate post footings:** 26\" diameter (Detail 304), 6\" std steel pipe, concrete-filled\n- **Bollards:** 6\" std steel pipe, concrete-filled, 18\" diameter at plan\n\n### Roof (Storage Room) *(AS4.1, AS4.2, S5.1)*\n- **White membrane roofing** to match existing\n- **5/8\" CDX plywood** sheathing\n- **Wood rafters** per structural — with **Simpson H2.5A** and **Simpson A34 clips** at each rafter\n- **3×8 wood nailer plate** on wall top, anchored with **3/4\"Ø × 8\" J-bolts at 24\" O.C.**\n- **2×8 ledger** on wall face with **(2) 3/4\"Ø anchor bolts at 24\" O.C.**, 5\" min. embedment\n- **Solid 2× blocking** between rafters, (3) 16d nails per block\n- **Lintel ML1** over storage room opening\n- **Slope toward** top wall (verify direction on S5.1)\n- **Metal coping** — Dark Bronze finish\n- **1/2\" CDX plywood soffit**, painted\n- **Metal gutter & prefinished downspout** — Dark Bronze\n\n### Finishes & Paint\n| Code | Color | Use |\n|------|-------|-----|\n| PT-113 | SW Dark Bronze (504-B54T104) | All site metals — coping, posts, gates, door |\n| PT-100 | SW Rookwood Medium Brown (SW2807) | Exterior CMU paint |\n| PT-31A | SW Natural Choice (SW-7011) | Interior ceiling (flat; semi-gloss on Hardie) |\n\n### Utilities & MEP *(AS4.1, E-202)*\n- **3/4\" non-freeze post hydrant** — 4\" PVC sleeve, 1 CY gravel base, filter fabric\n- **Low profile turbine roof ventilator** — supplied & installed by G.C.\n- **Lighting:** Wall-mounted **GI type fixture** above door, connected to **Circuit #8, Panel B** *(E-202)*\n- **1.5\" underground conduit** for irrigation control *(E-202)*\n\n### Key Coordination Points ⚠️\n1. **Structural ↔ Arch:** Bollard & gate post footings interrupt wall footings — can pour concurrently but verify layout\n2. **Civil:** Slab slope/drainage direction and finished grade at enclosure\n3. **Electrical (E-202):** Verify irrigation controller final location\n4. **1/2\" expansion joint** required at door assembly/adjacent wall interface\n5. **Special inspection** required for solid grouting of masonry walls *(S5.1)*\n\n### Reference Sheets\n- **AS4.1** — Plan, roof plan, all 4 elevations\n- **AS4.2** — Schedules, sections, gate details, storage room details\n- **S5.1** — Foundation plan, framing plan, schedules\n- **S5.2** — Structural details (301–308)\n- **E-202** — Electrical enlarged plan\n\nThat's a pretty complete picture. Let me know if you need me to drill deeper into any specific detail — gate hardware, a particular footing, the electrical hookup, etc.",
+    "response_time_s": 59.82,
+    "response_length": 4489,
+    "tools_called": [
+      {
+        "tool": "search",
+        "args": {
+          "query": "refuse enclosure"
+        },
+        "time_s": 0.006
+      },
+      {
+        "tool": "search",
+        "args": {
+          "query": "trash enclosure"
+        },
+        "time_s": 0.005
+      },
+      {
+        "tool": "search",
+        "args": {
+          "query": "dumpster enclosure"
+        },
+        "time_s": 0.003
+      },
+      {
+        "tool": "get_sheet_summary",
+        "args": {
+          "page_name": "AS4_1_Refuse_Enclosure_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_sheet_summary",
+        "args": {
+          "page_name": "AS4_2_Refuse_Enclosure_Details_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_sheet_summary",
+        "args": {
+          "page_name": "S5_1_Trash_Enclosure_Framing_Foundation_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_sheet_summary",
+        "args": {
+          "page_name": "S5_2_Trash_Enclosure_Details_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_sheet_summary",
+        "args": {
+          "page_name": "E_202_Trash_Enclosure_Storage_Enlarged_Plan_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "list_regions",
+        "args": {
+          "page_name": "AS4_1_Refuse_Enclosure_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "list_regions",
+        "args": {
+          "page_name": "AS4_2_Refuse_Enclosure_Details_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "list_regions",
+        "args": {
+          "page_name": "S5_1_Trash_Enclosure_Framing_Foundation_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "list_regions",
+        "args": {
+          "page_name": "S5_2_Trash_Enclosure_Details_p001"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "AS4_1_Refuse_Enclosure_p001",
+          "region_id": "r_440_610_850_970"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "AS4_1_Refuse_Enclosure_p001",
+          "region_id": "r_490_310_810_580"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "AS4_1_Refuse_Enclosure_p001",
+          "region_id": "r_450_50_850_250"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "AS4_1_Refuse_Enclosure_p001",
+          "region_id": "r_60_440_420_640"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "AS4_2_Refuse_Enclosure_Details_p001",
+          "region_id": "r_22_41_510_315"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "AS4_2_Refuse_Enclosure_Details_p001",
+          "region_id": "r_68_348_395_705"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "S5_1_Trash_Enclosure_Framing_Foundation_p001",
+          "region_id": "r_450_550_750_980"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "S5_1_Trash_Enclosure_Framing_Foundation_p001",
+          "region_id": "r_250_550_450_980"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "S5_2_Trash_Enclosure_Details_p001",
+          "region_id": "r_440_30_810_200"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "S5_2_Trash_Enclosure_Details_p001",
+          "region_id": "r_440_210_810_520"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "S5_2_Trash_Enclosure_Details_p001",
+          "region_id": "r_440_760_810_950"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "S5_2_Trash_Enclosure_Details_p001",
+          "region_id": "r_50_590_430_950"
+        },
+        "time_s": 0.0
+      }
+    ],
+    "tool_count": 24,
+    "tool_names": [
+      "search",
+      "get_sheet_summary",
+      "list_regions",
+      "get_region_detail"
+    ],
+    "asked_question_instead": false
+  },
+  {
+    "id": "arch_010",
+    "engine": "opus",
+    "query": "What's the Tormax door detail on A401?",
+    "query_type": "specific_fact",
+    "response": "Here's the full breakdown of the **Tormax Drive-Thru Door** details on **A401**:\n\n---\n\n### Detail 3 — Jamb\n- New Tormax door installs into the **existing wall assembly** (brick → air gap → rigid insulation → sheathing → framing).\n- **Self-adhering membrane flashing** required at the rough opening transition.\n- Frame is shimmed in place, then sealed with **continuous backer rod and sealant** on both interior and exterior sides.\n- **Exterior trim:** New break metal, finish to match existing storefront.\n- **Interior:** Sheathing and finish must match existing.\n- ⚠️ Verify framing dimensions against structural sheets.\n\n### Detail 2 — Head\n- New built-up wood header installed below the **existing steel angle**.\n- **B.O. Header at 7'-8\" A.F.F.**\n- **Recessed air curtain** mounted at the existing ceiling — coordinate with RCP and mechanical plans.\n- **Diverter box** installed below the air curtain; bottom must be flush with top of door opening (or as low as possible without interfering with door operation).\n- Air curtain **speed controller** mounts above the ceiling — coordinate with electrical/mechanical.\n- Exterior finish is **existing Nichiha**; interior furring finish must match adjacent cockpit surfaces.\n- Sealed with **wood shims + backer rod & sealant** on both sides.\n- ⚠️ Check the existing steel angle condition and height before setting the new header.\n\n### Detail 1 — Sill\n- **Manufacturer-supplied threshold** (confirm it's included in the Tormax package).\n- Mounted on the concrete slab with an **embedded floor track/anchor** — must be set before or during the pour.\n- Exterior slope **2% max** — reference Civil drawings for exact finish elevations.\n- Adjacent to existing wall, so this is a renovation interface.\n\n---\n\n**Big coordination items:**\n1. **Structural** — Verify header and jamb framing against structural sheets.\n2. **Mechanical/Electrical** — Air curtain, diverter box, and speed controller need trade coordination at the head.\n3. **Civil** — Exterior slab elevations at the sill for the 2% slope.\n4. **Concrete** — Floor track/anchors embedded in the slab pour.\n5. **Procurement** — Confirm the manufacturer-supplied threshold is part of the Tormax door package.\n\nWant me to dig into any of these details visually or chase down the structural/mechanical cross-references?",
+    "response_time_s": 20.02,
+    "response_length": 2315,
+    "tools_called": [
+      {
+        "tool": "get_sheet_summary",
+        "args": {
+          "page_name": "A401"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "list_regions",
+        "args": {
+          "page_name": "A401"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A401",
+          "region_id": "r_550_45_760_270"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A401",
+          "region_id": "r_550_320_850_725"
+        },
+        "time_s": 0.0
+      },
+      {
+        "tool": "get_region_detail",
+        "args": {
+          "page_name": "A401",
+          "region_id": "r_550_735_850_970"
+        },
+        "time_s": 0.0
+      }
+    ],
+    "tool_count": 5,
+    "tool_names": [
+      "get_sheet_summary",
+      "list_regions",
+      "get_region_detail"
+    ],
+    "asked_question_instead": false
+  }
+]

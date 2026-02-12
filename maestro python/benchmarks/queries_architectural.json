@@ -1,0 +1,72 @@
+[
+  {
+    "id": "arch_001",
+    "query": "What architectural sheets do we have?",
+    "type": "orientation",
+    "expected_tools": ["list_pages"],
+    "verify_against": "list of A-prefix pages in knowledge store"
+  },
+  {
+    "id": "arch_002",
+    "query": "Give me an overview of the egress plan.",
+    "type": "summary",
+    "expected_tools": ["get_sheet_summary"],
+    "verify_against": "A000_Egress_Plan_p001/pass1.json sheet_reflection"
+  },
+  {
+    "id": "arch_003",
+    "query": "What's getting demolished on the demolition RCP?",
+    "type": "specific_fact",
+    "expected_tools": ["get_sheet_summary", "list_regions", "get_region_detail"],
+    "verify_against": "A002_Demolition_RCP_p001 pass1+pass2 data"
+  },
+  {
+    "id": "arch_004",
+    "query": "What are the travel distances on the egress plan?",
+    "type": "specific_fact",
+    "expected_tools": ["get_region_detail"],
+    "verify_against": "A000 egress region pass2 dimensions: 60'-9 1/2\", 21'-0 1/2\""
+  },
+  {
+    "id": "arch_005",
+    "query": "What sheets reference AS2.1?",
+    "type": "cross_reference",
+    "expected_tools": ["find_cross_references"],
+    "verify_against": "A000 cross_references includes AS2.1"
+  },
+  {
+    "id": "arch_006",
+    "query": "What are the ADA accessibility requirements on this project?",
+    "type": "cross_cutting",
+    "expected_tools": ["search", "get_region_detail"],
+    "verify_against": "A000 accessibility notes: 36\" min clear, 2% max cross slope, 46-48\" AFF hardware, 27\" knee space"
+  },
+  {
+    "id": "arch_007",
+    "query": "What new rooms are being added to the building?",
+    "type": "cross_cutting",
+    "expected_tools": ["search", "get_region_detail"],
+    "verify_against": "A000 egress plan: New Freezer, New Office, New Catering Area"
+  },
+  {
+    "id": "arch_008",
+    "query": "What materials are specified in the architectural specs?",
+    "type": "specific_fact",
+    "expected_tools": ["list_pages", "get_sheet_summary", "get_region_detail"],
+    "verify_against": "A901-A908 spec sheet pass2 data"
+  },
+  {
+    "id": "arch_009",
+    "query": "Show me the roof plan details.",
+    "type": "summary",
+    "expected_tools": ["get_sheet_summary", "list_regions", "get_region_detail"],
+    "verify_against": "A102_Roof_Plan + A103_Roof_Details pass1+pass2"
+  },
+  {
+    "id": "arch_010",
+    "query": "What door and window types are on this project?",
+    "type": "specific_fact",
+    "expected_tools": ["get_sheet_summary", "get_region_detail"],
+    "verify_against": "A801_Door_Window_Schedule_Details pass2 data"
+  }
+]

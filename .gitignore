@@ -1,0 +1,13 @@
+# Secrets
+.env
+
+# Knowledge store (large binary data - PNGs, traces)
+knowledge_store/
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,19 @@
+{
+  "discipline": "MEP (Mechanical, Electrical, Plumbing)",
+  "sheet_prefixes": ["M", "E", "P"],
+  "what_to_watch": [
+    "Panel board schedules and circuit assignments",
+    "HVAC equipment schedules — model numbers, capacities, locations",
+    "Plumbing riser diagrams — waste/vent/storm vs water/beverage",
+    "Demo plans vs proposed plans — what's being ripped out vs installed",
+    "Comcheck compliance reports for energy code",
+    "Canopy-specific MEP (F2F, OMD enlarged plans)"
+  ],
+  "common_superintendent_questions": [
+    "What panel does this circuit feed from?",
+    "Where does the roof drainage go?",
+    "What HVAC unit serves this area?",
+    "What's the plumbing rough-in for this wall?"
+  ],
+  "learned": []
+}

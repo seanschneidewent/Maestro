@@ -1,0 +1,10 @@
+{
+  "cross_discipline": [
+    "Always check structural sheets when architectural shows new walls or openings",
+    "MEP demo plans and architectural demo plans should align — flag discrepancies",
+    "Canopy structures appear in both architectural (AS sheets) and standalone canopy sets — verify consistency",
+    "Specification sheets (A901-A908) contain critical material and installation requirements referenced by keynotes"
+  ],
+  "project_specific": [],
+  "lessons_from_benchmarks": []
+}

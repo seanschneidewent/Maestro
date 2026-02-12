@@ -1,0 +1,44 @@
+[
+  {
+    "id": "can_001",
+    "query": "What canopy sheets do we have? How many canopy structures are there?",
+    "type": "orientation",
+    "expected_tools": ["list_pages"],
+    "verify_against": "F2F, OMD, Patio prefix pages"
+  },
+  {
+    "id": "can_002",
+    "query": "What are the footing sizes for the patio canopy?",
+    "type": "specific_fact",
+    "expected_tools": ["search", "get_sheet_summary", "get_region_detail"],
+    "verify_against": "Patio AB1/AB2 footing pages pass2"
+  },
+  {
+    "id": "can_003",
+    "query": "What's the framing plan for the F2F canopy?",
+    "type": "summary",
+    "expected_tools": ["get_sheet_summary", "list_regions", "get_region_detail"],
+    "verify_against": "F2F E1 Canopy Framing Plan pass2"
+  },
+  {
+    "id": "can_004",
+    "query": "How does the OMD canopy connect to the building?",
+    "type": "specific_fact",
+    "expected_tools": ["get_region_detail", "search"],
+    "verify_against": "OMD E2-E4 sections pass2 — connection details"
+  },
+  {
+    "id": "can_005",
+    "query": "What lights are in the canopy structures?",
+    "type": "cross_cutting",
+    "expected_tools": ["search", "get_sheet_summary"],
+    "verify_against": "F2F LL1 + OMD LL1 + Patio light layout (if exists) pass2"
+  },
+  {
+    "id": "can_006",
+    "query": "Compare the three canopy structures — what's different between F2F, OMD, and Patio?",
+    "type": "coordination",
+    "expected_tools": ["get_sheet_summary", "get_sheet_summary", "get_sheet_summary"],
+    "verify_against": "Cross-comparison of all three canopy sets"
+  }
+]

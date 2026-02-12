@@ -1,0 +1,58 @@
+[
+  {
+    "id": "str_001",
+    "query": "What structural sheets do we have?",
+    "type": "orientation",
+    "expected_tools": ["list_pages"],
+    "verify_against": "list of S-prefix pages in knowledge store"
+  },
+  {
+    "id": "str_002",
+    "query": "What's the foundation plan look like?",
+    "type": "summary",
+    "expected_tools": ["get_sheet_summary", "list_regions"],
+    "verify_against": "S1.1_Foundation_Plan pass1"
+  },
+  {
+    "id": "str_003",
+    "query": "What's the concrete spec for this project?",
+    "type": "specific_fact",
+    "expected_tools": ["search", "get_sheet_summary", "get_region_detail"],
+    "verify_against": "S0.1/S0.2 general structural notes pass2"
+  },
+  {
+    "id": "str_004",
+    "query": "What size are the roof framing members?",
+    "type": "specific_fact",
+    "expected_tools": ["get_sheet_summary", "get_region_detail"],
+    "verify_against": "S2.1_Roof_Framing_Plan pass2 data"
+  },
+  {
+    "id": "str_005",
+    "query": "What are the connection details for the steel framing?",
+    "type": "specific_fact",
+    "expected_tools": ["get_region_detail"],
+    "verify_against": "S4.1_Framing_Details pass2"
+  },
+  {
+    "id": "str_006",
+    "query": "What's the trash enclosure structure look like?",
+    "type": "summary",
+    "expected_tools": ["get_sheet_summary", "list_regions", "get_region_detail"],
+    "verify_against": "S5.1 + S5.2 trash enclosure pass1+pass2"
+  },
+  {
+    "id": "str_007",
+    "query": "Are there any structural details that reference the canopy footings?",
+    "type": "cross_reference",
+    "expected_tools": ["search", "find_cross_references"],
+    "verify_against": "cross-reference between S sheets and canopy footing sheets"
+  },
+  {
+    "id": "str_008",
+    "query": "What rebar is specified in the general notes?",
+    "type": "specific_fact",
+    "expected_tools": ["get_region_detail"],
+    "verify_against": "S0.1/S0.2 general notes pass2 — rebar grades, sizes"
+  }
+]

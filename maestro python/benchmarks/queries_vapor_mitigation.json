@@ -1,0 +1,44 @@
+[
+  {
+    "id": "vap_001",
+    "query": "What vapor mitigation sheets do we have?",
+    "type": "orientation",
+    "expected_tools": ["list_pages"],
+    "verify_against": "list of VC-prefix pages"
+  },
+  {
+    "id": "vap_002",
+    "query": "What's the sequence for vapor barrier installation?",
+    "type": "specific_fact",
+    "expected_tools": ["get_sheet_summary", "get_region_detail"],
+    "verify_against": "VC-00 Tasks Summary pass2"
+  },
+  {
+    "id": "vap_003",
+    "query": "Where do the vapor venting pipes terminate at the roof?",
+    "type": "specific_fact",
+    "expected_tools": ["get_sheet_summary", "get_region_detail"],
+    "verify_against": "VC-07 Riser to Rain Cap Details pass2"
+  },
+  {
+    "id": "vap_004",
+    "query": "What material layers make up the vapor barrier?",
+    "type": "specific_fact",
+    "expected_tools": ["get_region_detail"],
+    "verify_against": "VC-06 Vapor Barrier Cross Sections pass2"
+  },
+  {
+    "id": "vap_005",
+    "query": "How does the vapor system tie into the existing building?",
+    "type": "specific_fact",
+    "expected_tools": ["get_sheet_summary", "get_region_detail"],
+    "verify_against": "VC-03 Vapor Barrier Repairs for Existing Building pass2"
+  },
+  {
+    "id": "vap_006",
+    "query": "What's the proposed soil vapor control system layout?",
+    "type": "summary",
+    "expected_tools": ["get_sheet_summary", "list_regions", "get_region_detail"],
+    "verify_against": "VC-04 Proposed Soil Vapor Control System pass2"
+  }
+]

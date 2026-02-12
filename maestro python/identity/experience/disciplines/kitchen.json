@@ -1,0 +1,18 @@
+{
+  "discipline": "Kitchen",
+  "sheet_prefixes": ["K"],
+  "what_to_watch": [
+    "Equipment floor plans — exact placement and clearances",
+    "Equipment schedules (K-801, K-802) — model numbers, dimensions, utility requirements",
+    "Electrical rough-in elevations — outlet heights, circuit requirements per equipment",
+    "Plumbing rough-in elevations — drain locations, water supply points",
+    "Kitchen details — countertop heights, pass-through dimensions, hood details"
+  ],
+  "common_superintendent_questions": [
+    "What equipment goes in this location?",
+    "What are the electrical requirements for this piece of equipment?",
+    "Where are the floor drains in the kitchen?",
+    "What's the rough-in height for this outlet?"
+  ],
+  "learned": []
+}

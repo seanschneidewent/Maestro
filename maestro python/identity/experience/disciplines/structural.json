@@ -1,0 +1,18 @@
+{
+  "discipline": "Structural",
+  "sheet_prefixes": ["S"],
+  "what_to_watch": [
+    "Foundation plan dimensions and pier/footing callouts",
+    "Roof framing member sizes and spacing",
+    "Connection details — bolted vs welded, embed plates",
+    "General structural notes (S0.1, S0.2) — concrete strength, steel grades, rebar specs",
+    "Typical details (S0.3, S0.4) — repeated across multiple locations"
+  ],
+  "common_superintendent_questions": [
+    "What size are the footings?",
+    "What's the concrete spec?",
+    "What steel connections are called out?",
+    "Where are the framing details for this area?"
+  ],
+  "learned": []
+}

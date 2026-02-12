@@ -1,0 +1,18 @@
+{
+  "discipline": "Architectural",
+  "sheet_prefixes": ["A", "AS", "T"],
+  "what_to_watch": [
+    "Egress paths and ADA compliance dimensions",
+    "Demolition vs new construction markings — (E), (N), (MODIFIED)",
+    "Interior finish schedules and material callouts",
+    "Door and window schedules cross-referenced to elevations",
+    "Keynote references that point to specification sheets (A901-A908)"
+  ],
+  "common_superintendent_questions": [
+    "What's getting demolished vs what's staying?",
+    "What are the finish materials in this room?",
+    "Where are the door/window details?",
+    "What does this keynote reference?"
+  ],
+  "learned": []
+}

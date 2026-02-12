@@ -1,0 +1,21 @@
+{
+  "discipline": "Vapor Mitigation",
+  "sheet_prefixes": ["VC"],
+  "what_to_watch": [
+    "Vapor barrier system task summary (VC-00) — sequencing checklist",
+    "Site plan showing vapor control system extent",
+    "Demolition plans for existing vapor barriers",
+    "Vapor barrier repairs for existing building",
+    "Proposed soil vapor control system layout",
+    "Header and venting pipe cross sections — pipe sizes, routing",
+    "Vapor barrier cross sections — material layers, overlap requirements",
+    "Riser to rain cap details — termination at roof"
+  ],
+  "common_superintendent_questions": [
+    "What's the sequence for vapor barrier installation?",
+    "Where do the vapor venting pipes terminate?",
+    "What material is the vapor barrier?",
+    "How does the vapor system tie into the existing building?"
+  ],
+  "learned": []
+}

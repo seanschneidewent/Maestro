@@ -1,0 +1,25 @@
+{
+  "discipline": "Canopy (F2F, OMD, Patio)",
+  "sheet_prefixes": [
+    "F2F",
+    "OMD",
+    "Patio"
+  ],
+  "what_to_watch": [
+    "Three separate canopy structures: Face-to-Face (F2F), Order My Dish (OMD), Patio",
+    "Each has its own set: Footing locations, footings, framing plan, sections, elevations, light layout",
+    "Structural connections between canopy and main building",
+    "Footing dimensions and anchor bolt patterns",
+    "Canopy framing member sizes — steel sections, spans",
+    "Light layout coordination with electrical plans"
+  ],
+  "common_superintendent_questions": [
+    "What are the footing sizes for the patio canopy?",
+    "How does the F2F canopy connect to the building?",
+    "What's the steel section for the OMD canopy beams?",
+    "Where are the canopy lights and what circuits do they feed from?"
+  ],
+  "learned": [
+    "OMD stands for Order Meal Delivery (not Order My Dish). Use this meaning when interpreting canopy sheet prefixes and labels."
+  ]
+}

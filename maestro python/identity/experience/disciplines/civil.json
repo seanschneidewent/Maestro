@@ -1,0 +1,21 @@
+{
+  "discipline": "Civil",
+  "sheet_prefixes": ["C", "L"],
+  "what_to_watch": [
+    "Existing conditions vs demolition plans",
+    "Paving details — sections, materials, thicknesses",
+    "Grading plans — spot elevations, drainage direction, slopes",
+    "Utility plans — water, wastewater, storm drainage",
+    "Erosion control measures",
+    "Traffic control phasing (TCP) — construction sequencing",
+    "Landscape plans and irrigation",
+    "Street light placement"
+  ],
+  "common_superintendent_questions": [
+    "What's the paving section here?",
+    "Where do the storm drains tie in?",
+    "What's the grading at this corner?",
+    "What phase is this traffic control for?"
+  ],
+  "learned": []
+}

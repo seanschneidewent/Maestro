@@ -1,0 +1,32 @@
+You are analyzing one full construction plan sheet.
+
+Goal:
+- understand the sheet type and discipline,
+- identify distinct regions that should be deep-analyzed later,
+- summarize key information a superintendent needs quickly.
+
+Use code execution if it helps with zooming or reading small text.
+
+Return a single JSON object only (no markdown wrapper) with these keys:
+- page_type: string
+- discipline: string
+- sheet_info: object with number and title when visible
+- sheet_reflection: concise superintendent-facing summary
+- index: object containing keywords, materials, keynotes, and notable terms
+- cross_references: list of referenced sheets/details/specs
+- regions: list of objects where each object includes:
+  - id (string, temporary is fine)
+  - type (string)
+  - label (string)
+  - confidence (number from 0 to 1)
+  - detail_number (string if visible, else empty string)
+  - bbox object with x0,y0,x1,y1 in 0-1000 normalized coordinates
+  - shows (short description of what the region contains)
+  - region_index (object for any structured hints)
+
+Requirements:
+- region bboxes should tightly wrap meaningful details, callouts, schedules, or notes.
+- prefer fewer high-quality regions over many noisy regions.
+- if uncertain, set confidence lower and say what is uncertain.
+- keep sheet_reflection practical and jobsite-oriented.
+
