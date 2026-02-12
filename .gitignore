@@ -4,6 +4,9 @@
 # Knowledge store (large binary data - PNGs, traces)
 knowledge_store/
 
+# Workspaces data (local workspace state)
+workspaces/
+
 # Python
 __pycache__/
 *.pyc
