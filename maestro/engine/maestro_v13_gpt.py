@@ -14,11 +14,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from tools import tools_v13
+from tools import tools_v13, workspaces
 from identity.experience_v13 import experience
 from knowledge.knowledge_v13 import load_project
 from identity.learning import learn, build_system_prompt as _build_experience_prompt
 from tools.tools_v13 import tool_definitions
+from tools.workspaces import workspace_tool_definitions, workspace_tool_functions
 from tools.vision import double_check_pointer, find_missing_pointer, see_page, see_pointer
 
 load_dotenv()
@@ -41,7 +42,7 @@ def _json_schema_from_params(params: dict[str, Any]) -> dict[str, Any]:
 
 def _build_openai_tools() -> list[dict[str, Any]]:
     tools: list[dict[str, Any]] = []
-    for tool in tool_definitions:
+    for tool in all_tool_definitions:
         tools.append(
             {
                 "type": "function",
@@ -57,7 +58,10 @@ def _build_openai_tools() -> list[dict[str, Any]]:
 
 project = load_project()
 tools_v13.project = project
+workspaces.init_workspaces(project)
+all_tool_definitions = tool_definitions + workspace_tool_definitions
 tool_functions = dict(tools_v13.tool_functions)
+tool_functions.update(workspace_tool_functions)
 
 
 def _project_required() -> str | None:
@@ -194,4 +198,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

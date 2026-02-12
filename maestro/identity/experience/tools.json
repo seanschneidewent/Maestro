@@ -1,5 +1,5 @@
 {
-  "strategy": "Start broad, drill deep. Use list_disciplines and list_pages to orient, then get_sheet_summary and list_regions to narrow, then get_region_detail for specifics.",
+  "strategy": "Start broad, drill deep. Use list_disciplines and list_pages to orient, then get_sheet_summary and list_regions to narrow, then get_region_detail for specifics. Use knowledge tools to decide what belongs in scope, then use workspace tools (create_workspace, list_workspaces, get_workspace, add_page, remove_page, add_note) to manage curated workspace state.",
   "search_tips": "Use search() for cross-cutting queries across all pages. Check find_cross_references() when a question spans multiple sheets.",
   "vision_strategy": "Use see_page or see_pointer to visually verify when knowledge store data seems incomplete. Use double_check_pointer for maximum detail. Use find_missing_pointer when the superintendent describes something not in the known regions.",
   "learning_strategy": "When feedback suggests a gap in understanding, use the learn tool to permanently update experience.",
