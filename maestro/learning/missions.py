@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import json
 import os
 from pathlib import Path
@@ -9,6 +10,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from openai import OpenAI
+from PIL import Image
 
 from knowledge.gemini_service import _collect_response, _extract_json_from_text, _save_trace
 
@@ -23,11 +25,16 @@ def _get_openai_client() -> OpenAI:
     return OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
+_gemini_client: genai.Client | None = None
+
 def _get_gemini_client() -> genai.Client:
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY is not set.")
-    return genai.Client(api_key=api_key)
+    global _gemini_client
+    if _gemini_client is None:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise RuntimeError("GEMINI_API_KEY is not set.")
+        _gemini_client = genai.Client(api_key=api_key)
+    return _gemini_client
 
 
 def _load_prompt() -> str:
@@ -189,6 +196,7 @@ def verify_mission(
     mission: dict[str, Any],
     project: dict[str, Any] | None,
     trace_directory: Path,
+    gemini_client: genai.Client | None = None,
 ) -> dict[str, Any]:
     result: dict[str, Any] = {
         "mission_id": mission.get("mission_id"),
@@ -223,13 +231,29 @@ def verify_mission(
         "Return concise findings with evidence quotes, values found, and any conflicts."
     )
 
+    # Convert to JPEG at 50% scale for fast Gemini processing
+    # (7MB PNGs with thinking=high take 5+ min; 1.3MB JPEGs take 12s with same quality)
     try:
-        response = _get_gemini_client().models.generate_content(
+        img = Image.open(page_png)
+        img_half = img.resize((img.width // 2, img.height // 2), Image.LANCZOS)
+        buf = io.BytesIO()
+        img_half.convert("RGB").save(buf, format="JPEG", quality=80)
+        image_bytes = buf.getvalue()
+        image_mime = "image/jpeg"
+        print(f"    [Learning Vision] JPEG {len(image_bytes)//1024}KB from {page_png.name}")
+    except Exception as exc:
+        image_bytes = page_png.read_bytes()
+        image_mime = "image/png"
+        print(f"    [Learning Vision] PNG fallback ({exc}) {len(image_bytes)//1024}KB")
+
+    try:
+        client = gemini_client or _get_gemini_client()
+        response = client.models.generate_content(
             model=VISION_MODEL,
             contents=[
                 types.Content(
                     parts=[
-                        types.Part.from_bytes(data=page_png.read_bytes(), mime_type="image/png"),
+                        types.Part.from_bytes(data=image_bytes, mime_type=image_mime),
                         types.Part.from_text(text=prompt),
                     ]
                 )
@@ -237,7 +261,6 @@ def verify_mission(
             config=types.GenerateContentConfig(
                 temperature=0,
                 thinking_config=types.ThinkingConfig(thinking_level="high"),
-                tools=[types.Tool(code_execution=types.ToolCodeExecution)],
             ),
         )
         collected = _collect_response(response)

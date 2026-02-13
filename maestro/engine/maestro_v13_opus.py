@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import os
 import sys
-import time
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +17,7 @@ from dotenv import load_dotenv
 from tools import tools_v13, workspaces
 from identity.experience_v13 import experience
 from knowledge.knowledge_v13 import load_project
-from identity.learning import build_system_prompt as _build_experience_prompt
+from identity.learning import learn, build_system_prompt as _build_experience_prompt
 from learning import agent as learning_agent
 from learning import status as learning_status
 from tools.tools_v13 import tool_definitions
@@ -98,10 +97,17 @@ def double_check_pointer_tool(page_name: str, region_id: str, mission: str) -> s
     return double_check_pointer(page_name, region_id, mission, project)
 
 
+def learn_tool(learning_mission: str) -> str:
+    print(f"\n  [Learning] Mission: {learning_mission}")
+    result = learn(learning_mission)
+    return result
+
+
 tool_functions["see_page"] = see_page_tool
 tool_functions["see_pointer"] = see_pointer_tool
 tool_functions["find_missing_pointer"] = find_missing_pointer_tool
 tool_functions["double_check_pointer"] = double_check_pointer_tool
+tool_functions["learn"] = learn_tool
 
 
 def _stringify_result(result: Any) -> str:
@@ -139,9 +145,10 @@ def process_message(
             func_name = block.name
             func_args = block.input or {}
             tool_id = block.id
-            print(f"  [Tool] {func_name}({func_args})")
+            print(f"  [Tool] {func_name}({func_args})".encode('ascii', 'replace').decode())
 
-            start = time.perf_counter()
+            import time as _time
+            start = _time.perf_counter()
             success = True
             error_text: str | None = None
             if func_name in tool_functions:
@@ -156,22 +163,22 @@ def process_message(
                 result = f"Unknown function: {func_name}"
                 error_text = result
 
-            elapsed_ms = int((time.perf_counter() - start) * 1000)
-            workspace_slug = learning_agent.mutated_workspace_slug_from_tool_call(func_name, func_args, result)
-            if workspace_slug:
-                workspace_slugs.add(workspace_slug)
+            elapsed_ms = int((_time.perf_counter() - start) * 1000)
 
-            tool_calls.append(
-                {
-                    "id": tool_id,
-                    "name": func_name,
-                    "args": func_args,
-                    "time_ms": elapsed_ms,
-                    "success": success,
-                    "error": error_text,
-                    "result": result,
-                }
-            )
+            # Track workspace mutations for learning
+            ws_slug = learning_agent.mutated_workspace_slug_from_tool_call(func_name, func_args, result)
+            if ws_slug:
+                workspace_slugs.add(ws_slug)
+
+            tool_calls.append({
+                "id": tool_id,
+                "name": func_name,
+                "args": func_args,
+                "time_ms": elapsed_ms,
+                "success": success,
+                "error": error_text,
+                "result": result,
+            })
 
             tool_results.append(
                 {
@@ -238,6 +245,7 @@ def main() -> None:
         if not user_input:
             continue
 
+        # Check for explicit correction → queue feedback job
         if learning_agent.is_explicit_correction(user_input):
             learning_agent.enqueue_feedback_job(
                 user_message=user_input,
@@ -248,9 +256,17 @@ def main() -> None:
         print("\nMaestro is thinking...")
         messages.append({"role": "user", "content": user_input})
         response, answer, turn_meta = process_message(messages, claude_tools)
-        messages.append({"role": "assistant", "content": response.content})
+        # Serialize SDK content blocks to dicts for next API call
+        assistant_content = []
+        for block in response.content:
+            if block.type == "text":
+                assistant_content.append({"type": "text", "text": block.text})
+            elif block.type == "tool_use":
+                assistant_content.append({"type": "tool_use", "id": block.id, "name": block.name, "input": block.input})
+        messages.append({"role": "assistant", "content": assistant_content})
         print(f"\nMaestro: {answer}")
 
+        # Queue learning jobs for any workspace mutations
         for workspace_slug in turn_meta.get("workspace_slugs", []):
             learning_agent.enqueue_workspace_job(
                 workspace_slug=workspace_slug,
@@ -259,12 +275,13 @@ def main() -> None:
                 tool_calls=turn_meta.get("tool_calls", []),
             )
 
+        # Show learning status bar
         status_payload = learning_status.read_status()
         if isinstance(status_payload, dict) and status_payload.get("active"):
             status_message = str(status_payload.get("message", "")).strip()
             if status_message:
                 print("-" * 57)
-                print(f" [Learning] {status_message}")
+                print(f" \U0001f4da {status_message}")
 
         last_assistant_response = answer
         last_tool_calls = turn_meta.get("tool_calls", [])

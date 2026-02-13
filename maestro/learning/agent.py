@@ -195,13 +195,18 @@ def run_learning_job(job: dict[str, Any], artifacts_dir: Path | None = None) -> 
 
     project = load_project()
 
+    # Create Gemini client here and pass to all missions — keeps it alive in scope
+    import os
+    from google import genai
+    gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
     for idx, mission in enumerate(mission_plan, start=1):
         status.write_status(
             True,
             f"Vision verifying {idx}/{len(mission_plan)} ({job_id})...",
             details={"target_page": mission.get("target_page", "")},
         )
-        mission_result = missions.verify_mission(mission, project, trace_dir)
+        mission_result = missions.verify_mission(mission, project, trace_dir, gemini_client=gemini_client)
         mission_results.append(mission_result)
         trace_path = mission_result.get("trace_path")
         if isinstance(trace_path, str) and trace_path.strip():
