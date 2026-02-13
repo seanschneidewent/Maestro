@@ -283,37 +283,6 @@ tool_definitions = [
     },
     {"name": "list_modifications", "description": "List all install/demolish/protect items across the project", "params": {}},
     {"name": "check_gaps", "description": "Find broken cross-references and regions missing deep analysis", "params": {}},
-    {"name": "see_page", "description": "Look at the full page image yourself to visually inspect it", "params": {"page_name": {"type": "string", "required": True}}},
-    {
-        "name": "see_pointer",
-        "description": "Look at a cropped region image to visually inspect a detail",
-        "params": {
-            "page_name": {"type": "string", "required": True},
-            "region_id": {"type": "string", "required": True},
-        },
-    },
-    {
-        "name": "find_missing_pointer",
-        "description": "Use agentic vision to find a missing region on a page",
-        "params": {
-            "page_name": {"type": "string", "required": True},
-            "mission": {"type": "string", "description": "What to look for and where", "required": True},
-        },
-    },
-    {
-        "name": "double_check_pointer",
-        "description": "Run deep agentic vision on a pointer for maximum detail extraction",
-        "params": {
-            "page_name": {"type": "string", "required": True},
-            "region_id": {"type": "string", "required": True},
-            "mission": {"type": "string", "description": "What specifically to verify or extract", "required": True},
-        },
-    },
-    {
-        "name": "learn",
-        "description": "Learn from feedback. Permanently updates experience.",
-        "params": {"learning_mission": {"type": "string", "required": True}},
-    },
 ]
 
 

@@ -29,21 +29,31 @@ def _get_gemini_client() -> genai.Client:
     return genai.Client(api_key=api_key)
 
 
-def _image_to_base64(image_path: Path, max_bytes: int = 4_000_000) -> dict[str, Any]:
+def _image_to_base64(image_path: Path, max_bytes: int = 4_000_000, max_dim: int = 7999) -> dict[str, Any]:
     """Read an image and return a base64-encoded content block for Anthropic multimodal.
     
-    Resizes to 50% if file exceeds max_bytes.
+    Resizes if file exceeds max_bytes or any dimension exceeds max_dim (Anthropic limit: 8000px).
     """
-    raw = image_path.read_bytes()
+    img = Image.open(image_path)
+    w, h = img.size
     media_type = "image/png" if image_path.suffix.lower() == ".png" else "image/jpeg"
 
-    if len(raw) > max_bytes:
-        img = Image.open(image_path)
-        w, h = img.size
-        img = img.resize((w // 2, h // 2), Image.LANCZOS)
-        buf = io.BytesIO()
-        img.save(buf, format="PNG")
-        raw = buf.getvalue()
+    needs_resize = w > max_dim or h > max_dim or image_path.stat().st_size > max_bytes
+
+    # Always scale to fit within max_dim and convert to JPEG for size
+    scale = min(max_dim / w, max_dim / h, 1.0)
+    if needs_resize or True:  # Always optimize for API
+        scale = min(scale, 0.5) if (w * h) > 4_000_000 else scale
+        new_w, new_h = int(w * scale), int(h * scale)
+        if new_w != w or new_h != h:
+            img = img.resize((new_w, new_h), Image.LANCZOS)
+
+    # Convert to JPEG — much smaller than PNG for construction plans
+    img = img.convert("RGB")
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=80)
+    raw = buf.getvalue()
+    media_type = "image/jpeg"
 
     b64 = base64.standard_b64encode(raw).decode("ascii")
     return {

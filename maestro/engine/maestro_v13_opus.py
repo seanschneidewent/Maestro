@@ -198,8 +198,10 @@ def _stringify_result(result: Any) -> Any:
     If result is a list of content blocks (multimodal), return as-is.
     Otherwise stringify for text-only tool results.
     """
-    if isinstance(result, list) and result and isinstance(result[0], dict) and "type" in result[0]:
-        return result  # Multimodal content blocks
+    if isinstance(result, list) and result and isinstance(result[0], dict) and result[0].get("type") in ("image", "text"):
+        # Only treat as multimodal if it looks like Anthropic content blocks
+        if any(item.get("type") == "image" for item in result):
+            return result  # Multimodal content blocks
     if isinstance(result, (dict, list)):
         return json.dumps(result, indent=2, ensure_ascii=True)
     return str(result)
