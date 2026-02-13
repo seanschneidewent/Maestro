@@ -1,32 +1,274 @@
-# learning.py — Maestro's Learning Harness V2
-# GPT 5.2 powered, JSON-based, hierarchical experience updates
+# learning.py — Maestro's Learning System V2
+# Direct-apply, real-time learning tools. No background worker.
+# Tools: update_experience, update_tool_description, update_knowledge
 
 from __future__ import annotations
 
 import json
-import os
 import time
 from pathlib import Path
 from typing import Any
 
-from dotenv import load_dotenv
-from openai import OpenAI
-
-load_dotenv()
-
-LEARNING_MODEL = "gpt-5.2"
 EXPERIENCE_DIR = Path(__file__).resolve().parent / "experience"
 LEARNING_LOG = EXPERIENCE_DIR / "learning_log.json"
 
+# Denylist — these files cannot be modified
+DENYLIST = {"soul.json"}
 
-def _get_client() -> OpenAI:
-    return OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+# ---------------------------------------------------------------------------
+# Changelog / Audit
+# ---------------------------------------------------------------------------
+
+def _log_change(tool: str, details: dict[str, Any]) -> None:
+    """Append to learning_log.json."""
+    entry = {
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "tool": tool,
+        **details,
+    }
+    log = []
+    if LEARNING_LOG.exists():
+        try:
+            log = json.loads(LEARNING_LOG.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            log = []
+    log.append(entry)
+    LEARNING_LOG.write_text(json.dumps(log, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# Tool: update_experience
+# ---------------------------------------------------------------------------
+
+def update_experience(file: str, action: str, field: str, value: str, reasoning: str) -> str:
+    """Update an experience JSON file. Direct-apply, logged.
+    
+    Args:
+        file: Relative path within experience/ (e.g. "disciplines/kitchen.json")
+        action: "append_to_list" or "set_field"
+        field: Field name to modify
+        value: Value to append or set
+        reasoning: Why this update matters
+    """
+    # Denylist check
+    if Path(file).name in DENYLIST:
+        return f"DENIED: {file} is read-only"
+
+    target = EXPERIENCE_DIR / file
+    if not target.exists():
+        return f"NOT FOUND: {file} does not exist in experience/"
+
+    if not target.suffix == ".json":
+        return f"SKIP: {file} is not a JSON file"
+
+    try:
+        data = json.loads(target.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        return f"ERROR reading {file}: {exc}"
+
+    result = ""
+
+    if action == "append_to_list":
+        if not isinstance(data.get(field), list):
+            data[field] = []
+        if value and value not in data[field]:
+            data[field].append(value)
+            result = f"OK: appended to {file} → {field}[]"
+        else:
+            result = f"SKIP: duplicate or empty value for {file} → {field}"
+
+    elif action == "set_field":
+        if field:
+            # Try to parse value as JSON for structured data
+            try:
+                parsed = json.loads(value)
+                data[field] = parsed
+            except (json.JSONDecodeError, TypeError):
+                data[field] = value
+            result = f"OK: set {file} → {field}"
+        else:
+            result = f"SKIP: no field specified"
+
+    else:
+        result = f"SKIP: unknown action '{action}'"
+
+    if result.startswith("OK"):
+        target.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    _log_change("update_experience", {
+        "file": file,
+        "action": action,
+        "field": field,
+        "value": value[:500],
+        "reasoning": reasoning,
+        "result": result,
+    })
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Tool: update_tool_description
+# ---------------------------------------------------------------------------
+
+def update_tool_description(tool_name: str, tips: str) -> str:
+    """Add/update usage tips for a tool in experience/tools.json.
+    
+    These tips are injected into the system prompt to guide future tool use.
+    """
+    tools_path = EXPERIENCE_DIR / "tools.json"
+    if not tools_path.exists():
+        return "NOT FOUND: tools.json missing"
+
+    try:
+        data = json.loads(tools_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        return f"ERROR reading tools.json: {exc}"
+
+    if "tool_tips" not in data:
+        data["tool_tips"] = {}
+
+    data["tool_tips"][tool_name] = tips
+    tools_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    _log_change("update_tool_description", {
+        "tool_name": tool_name,
+        "tips": tips[:500],
+        "result": f"OK: updated tips for {tool_name}",
+    })
+
+    return f"OK: updated tips for {tool_name}"
+
+
+# ---------------------------------------------------------------------------
+# Tool: update_knowledge
+# ---------------------------------------------------------------------------
+
+def update_knowledge(
+    page_name: str,
+    field: str,
+    value: str,
+    reasoning: str,
+    region_id: str | None = None,
+    project: dict[str, Any] | None = None,
+) -> str:
+    """Patch the knowledge store for a page or region. Direct-apply.
+    
+    Args:
+        page_name: Which page to update
+        field: What to update — sheet_reflection, index, regions, or content_markdown (for pointers)
+        value: New or corrected content
+        reasoning: Why this correction is needed
+        region_id: Target a specific pointer (required for content_markdown)
+        project: The in-memory project dict (updated in-place)
+    """
+    if not project:
+        return "No project loaded."
+
+    page = project.get("pages", {}).get(page_name)
+    if not page:
+        return f"Page '{page_name}' not found"
+
+    page_dir = Path(page.get("path", ""))
+
+    # Determine which file to patch
+    if region_id and field == "content_markdown":
+        # Patch pointer pass2.json
+        pointer = page.get("pointers", {}).get(region_id)
+        if not pointer:
+            return f"Region '{region_id}' not found on '{page_name}'"
+
+        pass2_path = page_dir / "pointers" / region_id / "pass2.json"
+        if not pass2_path.exists():
+            return f"No pass2.json for region '{region_id}'"
+
+        try:
+            data = json.loads(pass2_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as exc:
+            return f"ERROR reading pass2.json: {exc}"
+
+        data["content_markdown"] = value
+        pass2_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+        # Update in-memory
+        pointer["content_markdown"] = value
+
+        result = f"OK: updated {page_name}/{region_id} content_markdown"
+
+    else:
+        # Patch page pass1.json
+        pass1_path = page_dir / "pass1.json"
+        if not pass1_path.exists():
+            return f"No pass1.json for page '{page_name}'"
+
+        try:
+            data = json.loads(pass1_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as exc:
+            return f"ERROR reading pass1.json: {exc}"
+
+        if field == "sheet_reflection":
+            data["sheet_reflection"] = value
+            page["sheet_reflection"] = value
+            result = f"OK: updated {page_name} sheet_reflection"
+
+        elif field == "index":
+            # Merge index updates
+            try:
+                index_update = json.loads(value)
+                if isinstance(index_update, dict):
+                    if not isinstance(data.get("index"), dict):
+                        data["index"] = {}
+                    data["index"].update(index_update)
+                    page["index"].update(index_update)
+                    result = f"OK: merged {page_name} index"
+                else:
+                    result = "SKIP: index value must be a JSON object"
+            except json.JSONDecodeError:
+                result = "SKIP: index value must be valid JSON"
+
+        elif field == "cross_references":
+            # Append cross references
+            try:
+                new_refs = json.loads(value)
+                if isinstance(new_refs, list):
+                    existing = data.get("cross_references", [])
+                    if not isinstance(existing, list):
+                        existing = []
+                    existing.extend(new_refs)
+                    data["cross_references"] = existing
+                    page["cross_references"] = existing
+                    result = f"OK: added cross_references to {page_name}"
+                else:
+                    result = "SKIP: cross_references value must be a JSON array"
+            except json.JSONDecodeError:
+                result = "SKIP: cross_references value must be valid JSON"
+
+        else:
+            result = f"SKIP: unknown field '{field}' for page update"
+
+        if result.startswith("OK"):
+            pass1_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    _log_change("update_knowledge", {
+        "page_name": page_name,
+        "field": field,
+        "region_id": region_id,
+        "value": value[:500],
+        "reasoning": reasoning,
+        "result": result,
+    })
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# System Prompt Builder (kept from V1)
+# ---------------------------------------------------------------------------
 
 def _read_experience_tree() -> dict[str, Any]:
-    """Read the full experience tree into a dict for the learning agent."""
+    """Read the full experience tree into a dict."""
     tree = {}
-
     for json_file in sorted(EXPERIENCE_DIR.rglob("*.json")):
         if json_file.name == "learning_log.json":
             continue
@@ -35,180 +277,7 @@ def _read_experience_tree() -> dict[str, Any]:
             tree[rel] = json.loads(json_file.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             tree[rel] = {"_error": f"Could not read {rel}"}
-
     return tree
-
-
-def _apply_update(update: dict[str, Any]) -> str:
-    """Apply a single update from the learning agent.
-
-    Supported actions:
-      - append_to_learned: append a string to the 'learned' array
-      - append_to_list: append a string to any named list field
-      - set_field: set a specific field to a value
-    """
-    file_rel = update.get("file", "")
-    action = update.get("action", "")
-    target_path = EXPERIENCE_DIR / file_rel
-
-    if not target_path.exists():
-        return f"SKIP: {file_rel} does not exist"
-
-    if not target_path.suffix == ".json":
-        return f"SKIP: {file_rel} is not a JSON file"
-
-    try:
-        data = json.loads(target_path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError) as exc:
-        return f"ERROR reading {file_rel}: {exc}"
-
-    result = ""
-
-    if action == "append_to_learned":
-        value = update.get("value", "")
-        if not isinstance(data.get("learned"), list):
-            data["learned"] = []
-        if value and value not in data["learned"]:
-            data["learned"].append(value)
-            result = f"OK: appended to {file_rel} learned[]"
-        else:
-            result = f"SKIP: duplicate or empty value for {file_rel}"
-
-    elif action == "append_to_list":
-        field = update.get("field", "")
-        value = update.get("value", "")
-        if isinstance(data.get(field), list):
-            if value and value not in data[field]:
-                data[field].append(value)
-                result = f"OK: appended to {file_rel} {field}[]"
-            else:
-                result = f"SKIP: duplicate or empty for {file_rel} {field}"
-        else:
-            result = f"SKIP: {field} is not a list in {file_rel}"
-
-    elif action == "set_field":
-        field = update.get("field", "")
-        value = update.get("value")
-        if field:
-            data[field] = value
-            result = f"OK: set {file_rel} {field}"
-        else:
-            result = f"SKIP: no field specified for set_field"
-
-    else:
-        result = f"SKIP: unknown action '{action}'"
-
-    if result.startswith("OK"):
-        target_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-
-    return result
-
-
-def _log_learning(trigger: str, context: dict[str, Any], updates: list[dict], results: list[str]) -> None:
-    """Append to learning_log.json."""
-    log_entry = {
-        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
-        "trigger": trigger,
-        "context_summary": context.get("query", "")[:200],
-        "model": LEARNING_MODEL,
-        "updates": updates,
-        "results": results,
-    }
-
-    log = []
-    if LEARNING_LOG.exists():
-        try:
-            log = json.loads(LEARNING_LOG.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            log = []
-
-    log.append(log_entry)
-    LEARNING_LOG.write_text(json.dumps(log, indent=2, ensure_ascii=False), encoding="utf-8")
-
-
-def learn(learning_mission: str, context: dict[str, Any] | None = None) -> str:
-    """Main learning entry point. Called as a Maestro tool or by the benchmark harness.
-
-    Args:
-        learning_mission: What to learn / what went wrong / feedback from superintendent.
-        context: Optional dict with 'query', 'response', 'engine', 'grounding_score', etc.
-
-    Returns:
-        Summary of what was learned and updated.
-    """
-    if context is None:
-        context = {}
-
-    client = _get_client()
-    experience_tree = _read_experience_tree()
-
-    system_prompt = """You are Maestro's learning agent. Your job is to analyze feedback, benchmark results, 
-or self-corrections and decide how to improve Maestro's experience.
-
-You have access to Maestro's full experience tree (hierarchical JSON files).
-You must output a JSON object with an 'updates' array. Each update has:
-- "file": relative path within experience/ (e.g. "disciplines/architectural.json")
-- "action": one of "append_to_learned", "append_to_list", "set_field"
-- "field": (for append_to_list/set_field) which field to modify
-- "value": what to add or set
-- "reasoning": why this update matters
-
-Rules:
-- Be specific. "Be better at dimensions" is useless. "When asked about egress, always quote the exact travel distances from the plan" is useful.
-- Don't duplicate existing lessons. Read the current learned[] arrays first.
-- Target the right file. Architectural lessons go in disciplines/architectural.json. Cross-cutting insights go in patterns.json.
-- Keep lessons actionable for a construction superintendent context.
-- Output ONLY valid JSON. No markdown, no explanation outside the JSON."""
-
-    user_message = f"""LEARNING MISSION: {learning_mission}
-
-CONTEXT:
-{json.dumps(context, indent=2, default=str)[:3000]}
-
-CURRENT EXPERIENCE TREE:
-{json.dumps(experience_tree, indent=2, ensure_ascii=False)[:6000]}
-
-Analyze and output your updates as JSON."""
-
-    try:
-        response = client.chat.completions.create(
-            model=LEARNING_MODEL,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message},
-            ],
-            temperature=0,
-            response_format={"type": "json_object"},
-        )
-
-        raw = response.choices[0].message.content or "{}"
-        parsed = json.loads(raw)
-        updates = parsed.get("updates", [])
-
-    except Exception as exc:
-        error_msg = f"Learning agent error: {type(exc).__name__}: {exc}"
-        _log_learning("error", context, [], [error_msg])
-        return error_msg
-
-    # Apply updates
-    results = []
-    for update in updates:
-        result = _apply_update(update)
-        results.append(result)
-        print(f"  [LEARN] {result}")
-
-    # Log everything
-    _log_learning(context.get("trigger", "explicit"), context, updates, results)
-
-    # Build summary
-    applied = [r for r in results if r.startswith("OK")]
-    skipped = [r for r in results if r.startswith("SKIP")]
-
-    summary = f"Learning complete: {len(applied)} updates applied, {len(skipped)} skipped."
-    if applied:
-        summary += "\nApplied:\n" + "\n".join(f"  - {r}" for r in applied)
-
-    return summary
 
 
 def build_system_prompt() -> str:
@@ -238,7 +307,15 @@ def build_system_prompt() -> str:
         prompt_parts.append(f"\nTool strategy: {tools.get('strategy', '')}")
         prompt_parts.append(f"Search: {tools.get('search_tips', '')}")
         prompt_parts.append(f"Vision: {tools.get('vision_strategy', '')}")
+        prompt_parts.append(f"Learning: {tools.get('learning_strategy', '')}")
         prompt_parts.append(f"Gaps: {tools.get('gaps_strategy', '')}")
+
+        # Inject tool tips if they exist
+        tool_tips = tools.get("tool_tips", {})
+        if tool_tips:
+            prompt_parts.append("\n### Tool Tips (learned from experience)")
+            for tool_name, tips in tool_tips.items():
+                prompt_parts.append(f"- **{tool_name}**: {tips}")
 
     # Discipline knowledge
     disc_dir = EXPERIENCE_DIR / "disciplines"
