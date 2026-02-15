@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import anthropic
 from dotenv import load_dotenv
 
+from db import repository as repo
 from tools import tools_v13, workspaces
 from identity.experience_v13 import experience
 from knowledge.knowledge_v13 import load_project
@@ -25,7 +26,7 @@ from identity.learning import (
 )
 from tools.tools_v13 import tool_definitions
 from tools.workspaces import workspace_tool_definitions, workspace_tool_functions
-from tools.vision import see_page, see_pointer, gemini_vision_agent
+from tools.vision import highlight_on_page, see_page
 
 load_dotenv()
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
@@ -56,19 +57,12 @@ vision_tool_definitions = [
         "params": {"page_name": {"type": "string", "required": True}},
     },
     {
-        "name": "see_pointer",
-        "description": "Look at a cropped region image to visually inspect a detail.",
+        "name": "highlight_on_page",
+        "description": "Generate a Gemini visual highlight layer for a page already in a workspace.",
         "params": {
+            "workspace_slug": {"type": "string", "required": True},
             "page_name": {"type": "string", "required": True},
-            "region_id": {"type": "string", "required": True},
-        },
-    },
-    {
-        "name": "gemini_vision_agent",
-        "description": "Dispatch Gemini as a vision specialist to deeply inspect a page. Use when you need pixel-level detail extraction, verification of specific claims, or finding something not in the knowledge store. Write a clear mission describing what to look for.",
-        "params": {
-            "page_name": {"type": "string", "required": True},
-            "mission": {"type": "string", "description": "What to look for, verify, or extract", "required": True},
+            "mission": {"type": "string", "description": "What to highlight and why", "required": True},
         },
     },
 ]
@@ -115,8 +109,11 @@ learning_tool_definitions = [
 # ---------------------------------------------------------------------------
 
 project = load_project()
+project_name = project.get("name", "default") if project else "default"
+project_row = repo.get_or_create_project(project_name)
+project_id = project_row["id"]
 tools_v13.project = project
-workspaces.init_workspaces(project)
+workspaces.init_workspaces(project, project_id)
 
 all_tool_definitions = (
     tool_definitions
@@ -144,19 +141,12 @@ def see_page_tool(page_name: str) -> Any:
     return see_page(page_name, project)
 
 
-def see_pointer_tool(page_name: str, region_id: str) -> Any:
+def highlight_on_page_tool(workspace_slug: str, page_name: str, mission: str) -> dict[str, Any] | str:
     err = _project_required()
     if err:
         return err
-    return see_pointer(page_name, region_id, project)
-
-
-def gemini_vision_agent_tool(page_name: str, mission: str) -> str:
-    err = _project_required()
-    if err:
-        return err
-    print(f"\n  [Gemini Vision] Page: {page_name} | Mission: {mission[:80]}...")
-    return gemini_vision_agent(page_name, mission, project)
+    print(f"\n  [Highlight] Workspace: {workspace_slug} | Page: {page_name} | Mission: {mission[:80]}...")
+    return highlight_on_page(workspace_slug, page_name, mission, project, project_id)
 
 
 # --- Learning tool wrappers ---
@@ -181,8 +171,7 @@ def update_knowledge_tool(page_name: str, field: str, value: str, reasoning: str
 
 
 tool_functions["see_page"] = see_page_tool
-tool_functions["see_pointer"] = see_pointer_tool
-tool_functions["gemini_vision_agent"] = gemini_vision_agent_tool
+tool_functions["highlight_on_page"] = highlight_on_page_tool
 tool_functions["update_experience"] = update_experience_tool
 tool_functions["update_tool_description"] = update_tool_description_tool
 tool_functions["update_knowledge"] = update_knowledge_tool

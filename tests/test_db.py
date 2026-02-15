@@ -5,6 +5,7 @@
 
 import sys
 import os
+import tempfile
 from pathlib import Path
 
 # Add project root to path
@@ -101,24 +102,51 @@ test("get_workspace not found", repo.get_workspace(PID, "nonexistent") is None)
 print("\n🔹 WORKSPACE PAGES")
 # ===================================================================
 
-result = repo.add_page(PID, "foundation_framing", "S-101", "Structural foundation plan")
+result = repo.add_page(PID, "foundation_framing", "S-101")
 test("add_page success", isinstance(result, dict) and result["page_count"] == 1)
 
-result2 = repo.add_page(PID, "foundation_framing", "S-102", "Structural framing plan")
+result2 = repo.add_page(PID, "foundation_framing", "S-102")
 test("add second page", result2["page_count"] == 2)
 
 # Duplicate
-dup = repo.add_page(PID, "foundation_framing", "S-101", "duplicate")
+dup = repo.add_page(PID, "foundation_framing", "S-101")
 test("add_page duplicate rejected", isinstance(dup, str) and "already" in dup)
 
 # Not found workspace
-nf = repo.add_page(PID, "nonexistent", "S-101", "reason")
+nf = repo.add_page(PID, "nonexistent", "S-101")
 test("add_page bad workspace", isinstance(nf, str) and "not found" in nf.lower())
 
 # Verify pages in get_workspace
 ws_full = repo.get_workspace(PID, "foundation_framing")
 test("pages persisted", len(ws_full["pages"]) == 2)
-test("page has reason", ws_full["pages"][0]["reason"] == "Structural foundation plan")
+test("page has description", ws_full["pages"][0]["description"] == "")
+
+# Set and clear description
+desc = repo.add_description(PID, "foundation_framing", "S-101", "Structural foundation plan")
+test("add_description success", isinstance(desc, dict) and desc["description"] == "Structural foundation plan")
+desc2 = repo.add_description(PID, "foundation_framing", "S-101", "")
+test("clear_description success", isinstance(desc2, dict) and desc2["description"] == "")
+
+# Highlight add/get/remove
+tmpdir = Path(tempfile.mkdtemp(prefix="maestro_highlight_test_"))
+highlight_file = tmpdir / "s101_highlight.png"
+highlight_file.write_bytes(b"fakepng")
+
+h = repo.add_highlight(PID, "foundation_framing", "S-101", "Find sleeves", str(highlight_file))
+test("add_highlight success", isinstance(h, dict) and isinstance(h["highlight"].get("id"), int))
+
+hid = h["highlight"]["id"] if isinstance(h, dict) else -1
+got_h = repo.get_highlight(PID, "foundation_framing", hid)
+test("get_highlight success", got_h is not None and got_h["id"] == hid)
+
+ws_full = repo.get_workspace(PID, "foundation_framing")
+s101 = [p for p in ws_full["pages"] if p["page_name"] == "S-101"][0]
+test("workspace payload includes highlights", len(s101["highlights"]) == 1 and s101["highlights"][0]["id"] == hid)
+test("highlight has timestamp", bool(s101["highlights"][0]["created_at"]))
+
+removed_h = repo.remove_highlight(PID, "foundation_framing", "S-101", hid)
+test("remove_highlight success", isinstance(removed_h, dict) and removed_h["removed"] is True)
+test("remove_highlight missing", isinstance(repo.remove_highlight(PID, "foundation_framing", "S-101", hid), str))
 
 # Remove page
 rm = repo.remove_page(PID, "foundation_framing", "S-101")
@@ -266,7 +294,7 @@ print("\n🔹 CASCADE DELETES")
 # Create a throwaway project with workspace + pages + notes + events + messages
 tp = repo.get_or_create_project("Throwaway")
 repo.create_workspace(tp["id"], "Test WS", "desc", "test_ws")
-repo.add_page(tp["id"], "test_ws", "A-101", "test")
+repo.add_page(tp["id"], "test_ws", "A-101")
 repo.add_note(tp["id"], "test_ws", "test note")
 repo.add_event(tp["id"], "Test Event", "2026-01-01")
 repo.add_message(tp["id"], "user", "test")

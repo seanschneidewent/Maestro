@@ -9,8 +9,6 @@
 
 import sys
 import os
-import atexit
-import tempfile
 from pathlib import Path
 
 PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
@@ -70,25 +68,10 @@ from maestro.tools.workspaces import (
     add_page,
     remove_page,
     add_note,
+    add_description,
+    remove_highlight,
 )
-from maestro.tools import workspaces as workspaces_module
-
-_workspace_tmp = tempfile.TemporaryDirectory()
-_orig_workspaces_dir = workspaces_module.WORKSPACES_DIR
-_orig_workspaces_index_path = workspaces_module.WORKSPACES_INDEX_PATH
-workspaces_module.WORKSPACES_DIR = Path(_workspace_tmp.name) / "workspaces"
-workspaces_module.WORKSPACES_INDEX_PATH = workspaces_module.WORKSPACES_DIR / "workspaces.json"
-
-
-def _cleanup_workspace_tempdir() -> None:
-    workspaces_module.WORKSPACES_DIR = _orig_workspaces_dir
-    workspaces_module.WORKSPACES_INDEX_PATH = _orig_workspaces_index_path
-    _workspace_tmp.cleanup()
-
-
-atexit.register(_cleanup_workspace_tempdir)
-
-init_workspaces(MOCK_PROJECT)
+init_workspaces(MOCK_PROJECT, PID)
 
 # --- create_workspace ---
 print("\n  -- create_workspace --")
@@ -114,9 +97,10 @@ create_workspace("Walk-In Cooler", "Cooler and freezer scope")
 # --- list_workspaces ---
 print("\n  -- list_workspaces --")
 ws = list_workspaces()
-test("returns list", isinstance(ws, list))
-test("count = 3", len(ws) == 3)
-titles = {w["title"] for w in ws}
+test("returns dict", isinstance(ws, dict))
+test("has workspaces list", isinstance(ws.get("workspaces"), list))
+test("count = 3", len(ws["workspaces"]) == 3)
+titles = {w["title"] for w in ws["workspaces"]}
 test("all titles present", titles == {"Foundation & Framing", "Kitchen Rough-In", "Walk-In Cooler"})
 
 # --- get_workspace ---
@@ -141,40 +125,43 @@ test("not found returns str", isinstance(get_workspace("nonexistent"), str))
 # --- add_page ---
 print("\n  -- add_page --")
 # Full page name
-r = add_page("foundation_framing", "S-101 Structural Foundation Plan", "Foundation structural details")
+r = add_page("foundation_framing", "S-101 Structural Foundation Plan")
 test("add_page success", isinstance(r, dict) and r["page_count"] == 1)
 test("resolved page name", r["page_name"] == "S-101 Structural Foundation Plan")
 
 # Fuzzy match (prefix)
-r2 = add_page("foundation_framing", "S-102", "Framing details")
+r2 = add_page("foundation_framing", "S-102")
 test("fuzzy prefix match", isinstance(r2, dict) and r2["page_name"] == "S-102 Structural Framing Plan")
 test("page_count = 2", r2["page_count"] == 2)
 
 # Fuzzy match (substring)
-r3 = add_page("foundation_framing", "Vapor Mitigation", "VC coordination")
+r3 = add_page("foundation_framing", "Vapor Mitigation")
 test("substring match", isinstance(r3, dict) and r3["page_name"] == "VC-201 Vapor Mitigation Plan")
 
 # Duplicate rejection
-dup = add_page("foundation_framing", "S-101 Structural Foundation Plan", "dup")
+dup = add_page("foundation_framing", "S-101 Structural Foundation Plan")
 test("duplicate rejected", isinstance(dup, str) and "already" in dup)
 
 # Ambiguous match (A-20 matches both A-201 and A-202)
-amb = add_page("foundation_framing", "A-20", "test")
+amb = add_page("foundation_framing", "A-20")
 test("ambiguous match flagged", isinstance(amb, str) and "ambiguous" in amb.lower())
 
 # Page not found in project
-nf = add_page("foundation_framing", "Z-999 Nonexistent Sheet", "test")
+nf = add_page("foundation_framing", "Z-999 Nonexistent Sheet")
 test("page not in project", isinstance(nf, str) and "not found" in nf.lower())
 
-# Empty reason
-test("empty reason rejected", isinstance(add_page("foundation_framing", "A-201", ""), str))
-
 # Bad workspace
-test("bad workspace", isinstance(add_page("nonexistent", "A-201", "reason"), str))
+test("bad workspace", isinstance(add_page("nonexistent", "A-201"), str))
 
 # By title resolution for workspace
-r_title = add_page("Kitchen Rough-In", "P-401 Plumbing Plan", "Kitchen plumbing")
+r_title = add_page("Kitchen Rough-In", "P-401 Plumbing Plan")
 test("workspace by title", isinstance(r_title, dict) and r_title["workspace_slug"] == "kitchen_rough_in")
+
+# Description updates
+desc = add_description("foundation_framing", "S-101 Structural Foundation Plan", "Foundation structural details")
+test("add_description success", isinstance(desc, dict) and desc["description"] == "Foundation structural details")
+desc_clear = add_description("foundation_framing", "S-101 Structural Foundation Plan", "")
+test("clear_description success", isinstance(desc_clear, dict) and desc_clear["description"] == "")
 
 # --- remove_page ---
 print("\n  -- remove_page --")
@@ -222,12 +209,25 @@ ws_final = get_workspace("foundation_framing")
 test("notes persisted", len(ws_final["notes"]) == 3)
 test("note text correct", ws_final["notes"][0]["text"].startswith("3-inch pipe sleeves"))
 
+# Highlights remove through workspace tool
+highlight_file = Path(__file__).resolve().parent / ".tmp_highlight.png"
+highlight_file.write_bytes(b"fakepng")
+added_highlight = repo.add_highlight(PID, "foundation_framing", "VC-201 Vapor Mitigation Plan", "Find sleeves", str(highlight_file))
+test("add highlight for remove test", isinstance(added_highlight, dict))
+hid = added_highlight["highlight"]["id"] if isinstance(added_highlight, dict) else -1
+removed_highlight = remove_highlight("foundation_framing", "VC-201 Vapor Mitigation Plan", hid)
+test("remove_highlight success", isinstance(removed_highlight, dict) and removed_highlight["removed"] is True)
+try:
+    highlight_file.unlink()
+except OSError:
+    pass
+
 # --- No project loaded ---
 print("\n  -- no project edge cases --")
-init_workspaces(None)
-test("add_page no project", isinstance(add_page("foundation_framing", "S-101", "test"), str) and "No project" in add_page("foundation_framing", "S-101", "test"))
+init_workspaces(None, PID)
+test("add_page no project", isinstance(add_page("foundation_framing", "S-101"), str) and "No project" in add_page("foundation_framing", "S-101"))
 # Restore
-init_workspaces(MOCK_PROJECT)
+init_workspaces(MOCK_PROJECT, PID)
 
 
 # ===================================================================
@@ -359,9 +359,9 @@ from maestro.tools.registry import build_tool_registry
 defs, funcs = build_tool_registry(MOCK_PROJECT, project_id=PID)
 
 test("definitions is list", isinstance(defs, list))
-test("28 tool definitions", len(defs) == 28, f"got {len(defs)}")
+test("29 tool definitions", len(defs) == 29, f"got {len(defs)}")
 test("functions is dict", isinstance(funcs, dict))
-test("28 tool functions", len(funcs) == 28, f"got {len(funcs)}")
+test("29 tool functions", len(funcs) == 29, f"got {len(funcs)}")
 
 # Check all definition names have matching functions
 def_names = {d["name"] for d in defs}
@@ -369,15 +369,15 @@ func_names = set(funcs.keys())
 test("all defs have funcs", def_names == func_names, f"missing: {def_names - func_names}, extra: {func_names - def_names}")
 
 # Key tools present
-for tool_name in ["create_workspace", "list_workspaces", "add_page", "add_note",
+for tool_name in ["create_workspace", "list_workspaces", "add_page", "add_note", "add_description", "remove_highlight",
                    "list_events", "add_event", "upcoming",
-                   "search", "see_page", "gemini_vision_agent",
+                   "search", "see_page", "highlight_on_page",
                    "update_experience", "update_knowledge"]:
     test(f"tool '{tool_name}' registered", tool_name in func_names)
 
 # Call workspace tool through registry
 result = funcs["list_workspaces"]()
-test("registry list_workspaces works", isinstance(result, list) and len(result) == 3)
+test("registry list_workspaces works", isinstance(result, dict) and len(result.get("workspaces", [])) == 3)
 
 # Call schedule tool through registry
 result = funcs["list_events"]()
@@ -492,7 +492,7 @@ print("\n== CROSS-DOMAIN INTEGRITY ==")
 # Verify workspace and schedule data coexist correctly
 ws_list = list_workspaces()
 evt_list = list_events()
-test("workspaces still there", isinstance(ws_list, list) and len(ws_list) == 3)
+test("workspaces still there", isinstance(ws_list, dict) and len(ws_list.get("workspaces", [])) == 3)
 test("events still there", isinstance(evt_list, list) and len(evt_list) == 2)
 
 # Messages still there

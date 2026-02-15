@@ -96,7 +96,9 @@ def _heartbeat_loop():
             workspaces = []
             try:
                 result = list_workspaces()
-                if isinstance(result, list):
+                if isinstance(result, dict):
+                    workspaces = result.get("workspaces", [])
+                elif isinstance(result, list):
                     workspaces = result
             except Exception:
                 pass

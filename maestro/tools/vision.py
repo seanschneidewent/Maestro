@@ -1,7 +1,4 @@
-# vision.py - On-demand visual inspection tools for Maestro V13
-#
-# see_page / see_pointer: Return image bytes for Opus native multimodal vision
-# gemini_vision_agent: Dispatch Gemini as a specialist for deep extraction
+# vision.py - Visual tools for Maestro V13
 
 from __future__ import annotations
 
@@ -9,6 +6,8 @@ import base64
 import io
 import json
 import os
+import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -17,9 +16,13 @@ from google import genai
 from google.genai import types
 from PIL import Image
 
+from maestro.db import repository as repo
+from maestro.knowledge.gemini_service import _collect_response, _save_trace
+
 load_dotenv()
 
 GEMINI_MODEL = "gemini-3-flash-preview"
+WORKSPACES_DIR = Path(__file__).resolve().parents[2] / "workspaces"
 
 
 def _get_gemini_client() -> genai.Client:
@@ -30,25 +33,20 @@ def _get_gemini_client() -> genai.Client:
 
 
 def _image_to_base64(image_path: Path, max_bytes: int = 4_000_000, max_dim: int = 7999) -> dict[str, Any]:
-    """Read an image and return a base64-encoded content block for Anthropic multimodal.
-    
-    Resizes if file exceeds max_bytes or any dimension exceeds max_dim (Anthropic limit: 8000px).
-    """
+    """Read an image and return a base64-encoded content block for Anthropic multimodal."""
     img = Image.open(image_path)
     w, h = img.size
     media_type = "image/png" if image_path.suffix.lower() == ".png" else "image/jpeg"
 
     needs_resize = w > max_dim or h > max_dim or image_path.stat().st_size > max_bytes
 
-    # Always scale to fit within max_dim and convert to JPEG for size
     scale = min(max_dim / w, max_dim / h, 1.0)
-    if needs_resize or True:  # Always optimize for API
+    if needs_resize or True:  # Always optimize for API payload size
         scale = min(scale, 0.5) if (w * h) > 4_000_000 else scale
         new_w, new_h = int(w * scale), int(h * scale)
         if new_w != w or new_h != h:
             img = img.resize((new_w, new_h), Image.LANCZOS)
 
-    # Convert to JPEG — much smaller than PNG for construction plans
     img = img.convert("RGB")
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=80)
@@ -66,129 +64,244 @@ def _image_to_base64(image_path: Path, max_bytes: int = 4_000_000, max_dim: int 
     }
 
 
-def _png_to_jpeg_bytes(png_path: Path, scale: float = 0.5, quality: int = 85) -> bytes:
-    """Convert a PNG to scaled JPEG bytes for Gemini API (faster, smaller)."""
-    img = Image.open(png_path).convert("RGB")
-    w, h = img.size
-    img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
-    buf = io.BytesIO()
-    img.save(buf, format="JPEG", quality=quality)
-    return buf.getvalue()
+def _normalize_token(value: str) -> str:
+    token = re.sub(r"[^a-z0-9]+", "_", value.lower())
+    return re.sub(r"_+", "_", token).strip("_")
+
+
+def _resolve_project_page_name(page_name: str, project: dict[str, Any]) -> str | None:
+    pages = project.get("pages", {}) if isinstance(project, dict) else {}
+    if not isinstance(pages, dict) or not page_name.strip():
+        return None
+
+    if page_name in pages:
+        return page_name
+
+    normalized_query = _normalize_token(page_name)
+    if not normalized_query:
+        return None
+
+    candidates = [name for name in pages.keys() if isinstance(name, str)]
+    normalized = {name: _normalize_token(name) for name in candidates}
+
+    prefix_matches = sorted([name for name in candidates if normalized[name].startswith(normalized_query)])
+    if len(prefix_matches) == 1:
+        return prefix_matches[0]
+
+    substring_matches = sorted([name for name in candidates if normalized_query in normalized[name]])
+    if len(substring_matches) == 1:
+        return substring_matches[0]
+
+    return None
+
+
+def _resolve_workspace_page_name(project_id: str, workspace_slug: str, page_name: str) -> tuple[str | None, str | None]:
+    resolved_slug = repo.resolve_workspace_slug(project_id, workspace_slug)
+    if not resolved_slug:
+        return None, None
+
+    workspace = repo.get_workspace(project_id, resolved_slug)
+    if not workspace:
+        return None, resolved_slug
+
+    pages = [str(p.get("page_name", "")) for p in workspace.get("pages", []) if isinstance(p, dict)]
+    if page_name in pages:
+        return page_name, resolved_slug
+
+    normalized_query = _normalize_token(page_name)
+    if not normalized_query:
+        return None, resolved_slug
+
+    normalized = {name: _normalize_token(name) for name in pages}
+
+    prefix_matches = sorted([name for name in pages if normalized[name].startswith(normalized_query)])
+    if len(prefix_matches) == 1:
+        return prefix_matches[0], resolved_slug
+
+    substring_matches = sorted([name for name in pages if normalized_query in normalized[name]])
+    if len(substring_matches) == 1:
+        return substring_matches[0], resolved_slug
+
+    return None, resolved_slug
+
+
+def _safe_filename(value: str) -> str:
+    return _normalize_token(value) or "page"
 
 
 def see_page(page_name: str, project: dict[str, Any] | None) -> list[dict[str, Any]]:
     """Return page image as multimodal content blocks for Opus to see directly."""
     if not project:
         return [{"type": "text", "text": "No project loaded."}]
-    page = project.get("pages", {}).get(page_name)
-    if not page:
+
+    resolved_page_name = _resolve_project_page_name(page_name, project)
+    if not resolved_page_name:
         return [{"type": "text", "text": f"Page '{page_name}' not found"}]
 
+    page = project.get("pages", {}).get(resolved_page_name)
     page_png = Path(page.get("path", "")) / "page.png"
     if not page_png.exists():
-        return [{"type": "text", "text": f"No image for '{page_name}'"}]
+        return [{"type": "text", "text": f"No image for '{resolved_page_name}'"}]
 
     image_block = _image_to_base64(page_png)
     return [
         image_block,
-        {"type": "text", "text": f"This is page '{page_name}'. You are looking at it directly. Describe what you see."},
+        {
+            "type": "text",
+            "text": (
+                f"This is page '{resolved_page_name}'. You are looking at it directly. "
+                "Describe what you see."
+            ),
+        },
     ]
 
 
-def see_pointer(page_name: str, region_id: str, project: dict[str, Any] | None) -> list[dict[str, Any]]:
-    """Return cropped region image as multimodal content blocks for Opus to see directly."""
-    if not project:
-        return [{"type": "text", "text": "No project loaded."}]
-    page = project.get("pages", {}).get(page_name)
-    if not page:
-        return [{"type": "text", "text": f"Page '{page_name}' not found"}]
-
-    pointer = page.get("pointers", {}).get(region_id)
-    if not pointer:
-        return [{"type": "text", "text": f"Region '{region_id}' not found on '{page_name}'"}]
-
-    crop_path = Path(pointer.get("crop_path", ""))
-    if not crop_path.exists():
-        return [{"type": "text", "text": f"No crop image for region '{region_id}'"}]
-
-    image_block = _image_to_base64(crop_path)
-    return [
-        image_block,
-        {"type": "text", "text": f"This is region '{region_id}' on page '{page_name}'. You are looking at the cropped detail directly."},
-    ]
-
-
-def gemini_vision_agent(page_name: str, mission: str, project: dict[str, Any] | None) -> str:
-    """Dispatch Gemini as a vision specialist for deep extraction on a page.
-    
-    Converts PNG to JPEG at 50% scale for speed (proven: 12s vs 312s).
-    Uses thinking=high for maximum accuracy.
-    """
+def highlight_on_page(
+    workspace_slug: str,
+    page_name: str,
+    mission: str,
+    project: dict[str, Any] | None,
+    project_id: str | None,
+) -> dict[str, Any] | str:
+    """Generate and persist a Gemini highlight layer for a workspace page."""
     if not project:
         return "No project loaded."
-    page = project.get("pages", {}).get(page_name)
-    if not page:
-        return f"Page '{page_name}' not found"
+    if not project_id:
+        return "No project id available."
 
+    clean_mission = mission.strip() if isinstance(mission, str) else ""
+    if not clean_mission:
+        return "Mission is required."
+
+    resolved_workspace_page, resolved_slug = _resolve_workspace_page_name(project_id, workspace_slug, page_name)
+    if not resolved_slug:
+        return f"Workspace '{workspace_slug}' not found."
+    if not resolved_workspace_page:
+        return f"Page '{page_name}' is not in workspace '{resolved_slug}'."
+
+    resolved_project_page = _resolve_project_page_name(resolved_workspace_page, project)
+    if not resolved_project_page:
+        return f"Page '{resolved_workspace_page}' not found in loaded project."
+
+    page = project.get("pages", {}).get(resolved_project_page)
     page_png = Path(page.get("path", "")) / "page.png"
     if not page_png.exists():
-        return f"No image for '{page_name}'"
+        return f"No image for '{resolved_project_page}'."
 
-    # Convert to JPEG for fast Gemini processing
-    jpeg_bytes = _png_to_jpeg_bytes(page_png)
-
-    client = _get_gemini_client()
-
-    prompt = f"""You are Maestro's vision specialist inspecting a construction plan page.
-
-PAGE: {page_name}
-
-MISSION: {mission}
-
-Inspect the page carefully. Report your findings with specific details:
-- Exact dimensions, notes, and callouts you can read
-- Locations of relevant items (describe position on the page)
-- Any text, labels, or annotations visible
-- Confidence level for each finding
-
-Be precise and thorough. The superintendent needs accurate information."""
-
-    response = client.models.generate_content(
-        model=GEMINI_MODEL,
-        contents=[
-            types.Content(
-                parts=[
-                    types.Part.from_bytes(data=jpeg_bytes, mime_type="image/jpeg"),
-                    types.Part.from_text(text=prompt),
-                ]
-            )
-        ],
-        config=types.GenerateContentConfig(
-            temperature=0,
-            thinking_config=types.ThinkingConfig(thinking_level="high"),
-        ),
-    )
-
-    # Extract text from response
-    result_text = ""
-    if response.candidates:
-        for part in response.candidates[0].content.parts:
-            if hasattr(part, "text") and part.text:
-                result_text += part.text
-
-    # Save trace
-    page_dir = Path(page.get("path", ""))
-    trace = {
-        "tool": "gemini_vision_agent",
-        "page": page_name,
-        "mission": mission,
-        "model": GEMINI_MODEL,
-        "result": result_text[:2000],
-    }
     try:
-        with (page_dir / "gemini_vision_trace.json").open("w", encoding="utf-8") as f:
-            json.dump(trace, f, indent=2)
+        from maestro.api.websocket import emit_page_highlight_started
+
+        emit_page_highlight_started(
+            workspace_slug=resolved_slug,
+            page_name=resolved_workspace_page,
+            mission=clean_mission,
+        )
+    except Exception:
+        pass
+
+    try:
+        client = _get_gemini_client()
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=[
+                types.Content(
+                    parts=[
+                        types.Part.from_bytes(data=page_png.read_bytes(), mime_type="image/png"),
+                        types.Part.from_text(
+                            text=(
+                                "You are generating a visual highlight overlay for a construction plan page.\n\n"
+                                f"PAGE: {resolved_workspace_page}\n"
+                                f"MISSION: {clean_mission}\n\n"
+                                "Use code execution to create exactly one PNG image that highlights only what is relevant "
+                                "to the mission. Keep the original page readable. Prefer translucent overlays, outlines, "
+                                "and short callouts. Return a brief summary text and the image output."
+                            )
+                        ),
+                    ]
+                )
+            ],
+            config=types.GenerateContentConfig(
+                temperature=0,
+                thinking_config=types.ThinkingConfig(thinking_level="high"),
+                tools=[types.Tool(code_execution=types.ToolCodeExecution)],
+            ),
+        )
+    except Exception as exc:
+        return f"Highlight generation failed: {exc}"
+
+    collected = _collect_response(response)
+    images = collected.get("images", [])
+    trace = collected.get("trace", [])
+    result_text = collected.get("text", "")
+
+    if not images:
+        text_preview = result_text.strip()
+        if text_preview:
+            return (
+                "Gemini did not return a highlight image. "
+                f"Model output preview: {text_preview[:240]}"
+            )
+        return "Gemini did not return a highlight image."
+
+    now = datetime.now(timezone.utc)
+    timestamp = now.strftime("%Y%m%dT%H%M%SZ")
+    filename_stem = f"{_safe_filename(resolved_workspace_page)}_{timestamp}"
+    highlight_dir = WORKSPACES_DIR / resolved_slug / "highlights"
+    highlight_dir.mkdir(parents=True, exist_ok=True)
+
+    image_path = (highlight_dir / f"{filename_stem}.png").resolve()
+    image_path.write_bytes(images[0])
+
+    saved_trace = _save_trace(trace, images, highlight_dir, prefix=f"{filename_stem}_trace")
+    trace_path = highlight_dir / f"{filename_stem}_trace.json"
+    try:
+        trace_path.write_text(
+            json.dumps(
+                {
+                    "tool": "highlight_on_page",
+                    "workspace_slug": resolved_slug,
+                    "page_name": resolved_workspace_page,
+                    "mission": clean_mission,
+                    "model": GEMINI_MODEL,
+                    "text": result_text,
+                    "trace": saved_trace,
+                },
+                indent=2,
+                ensure_ascii=True,
+            ),
+            encoding="utf-8",
+        )
     except OSError:
         pass
 
-    return result_text or "No response from Gemini."
+    saved = repo.add_highlight(
+        project_id=project_id,
+        slug=resolved_slug,
+        page_name=resolved_workspace_page,
+        mission=clean_mission,
+        image_path=str(image_path),
+    )
+    if isinstance(saved, str):
+        return saved
+
+    highlight_payload = saved.get("highlight", {})
+
+    try:
+        from maestro.api.websocket import emit_page_highlight_complete
+
+        emit_page_highlight_complete(
+            workspace_slug=resolved_slug,
+            page_name=resolved_workspace_page,
+            highlight_id=highlight_payload.get("id"),
+            mission=clean_mission,
+            image_path=str(image_path),
+        )
+    except Exception:
+        pass
+
+    return {
+        "workspace_slug": resolved_slug,
+        "page_name": resolved_workspace_page,
+        "highlight": highlight_payload,
+        "message": (result_text or "Highlight generated.")[:500],
+    }

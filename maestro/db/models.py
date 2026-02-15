@@ -86,13 +86,30 @@ class WorkspacePage(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False)
     page_name = Column(String(255), nullable=False)
-    reason = Column(Text, default="")
+    description = Column(Text, default="", nullable=True)
     added_by = Column(String(50), default="maestro")
     added_at = Column(DateTime(timezone=True), default=_utcnow)
-    regions_of_interest = Column(Text, default="[]")  # JSON array stored as text
 
     # Relationships
     workspace = relationship("Workspace", back_populates="pages")
+    highlights = relationship("WorkspaceHighlight", back_populates="page", cascade="all, delete-orphan")
+
+
+# ---------------------------------------------------------------------------
+# WorkspaceHighlight — Gemini-generated highlight layers for a page
+# ---------------------------------------------------------------------------
+
+class WorkspaceHighlight(Base):
+    __tablename__ = "workspace_highlights"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    workspace_page_id = Column(Integer, ForeignKey("workspace_pages.id"), nullable=False)
+    mission = Column(Text, nullable=False)
+    image_path = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    # Relationships
+    page = relationship("WorkspacePage", back_populates="highlights")
 
 
 # ---------------------------------------------------------------------------

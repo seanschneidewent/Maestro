@@ -12,7 +12,8 @@ export default function App() {
   const [workspaces, setWorkspaces] = useState([])
   const [activeWorkspace, setActiveWorkspace] = useState(null)
   const [workspaceDetail, setWorkspaceDetail] = useState(null)
-  const [viewingPage, setViewingPage] = useState(null)
+  const [viewingAsset, setViewingAsset] = useState(null)
+  const [highlightInProgress, setHighlightInProgress] = useState({})
   const [leftCollapsed, setLeftCollapsed] = useState(false)
   const [rightCollapsed, setRightCollapsed] = useState(false)
 
@@ -44,7 +45,20 @@ export default function App() {
   useWebSocket({
     onWorkspace: (data) => {
       loadWorkspaces()
-      if (data.workspace_slug === activeWorkspace) {
+
+      const eventKey = `${data.workspace_slug}:${data.page_name || ''}`
+      if (data.action === 'page_highlight_started' && data.page_name) {
+        setHighlightInProgress(prev => ({ ...prev, [eventKey]: data.mission || '' }))
+      }
+      if ((data.action === 'page_highlight_complete' || data.action === 'highlight_removed') && data.page_name) {
+        setHighlightInProgress(prev => {
+          const next = { ...prev }
+          delete next[eventKey]
+          return next
+        })
+      }
+
+      if (data.workspace_slug === activeWorkspace && activeWorkspace) {
         api.getWorkspace(activeWorkspace).then(setWorkspaceDetail).catch(console.error)
       }
     },
@@ -54,10 +68,14 @@ export default function App() {
   const openPage = useCallback(async (pageName) => {
     try {
       const { image_url } = await api.getPageImage(pageName)
-      setViewingPage({ page_name: pageName, image_url })
+      setViewingAsset({ title: pageName, image_url })
     } catch (e) {
       console.error('Failed to load page image:', e)
     }
+  }, [])
+
+  const openHighlight = useCallback(({ title, imageUrl }) => {
+    setViewingAsset({ title, image_url: imageUrl })
   }, [])
 
   return (
@@ -86,7 +104,12 @@ export default function App() {
       </div>
 
       <div className="flex-1 overflow-hidden flex flex-col">
-        <WorkspaceView workspace={activeWorkspace ? workspaceDetail : null} onPageClick={openPage} />
+        <WorkspaceView
+          workspace={activeWorkspace ? workspaceDetail : null}
+          onPageClick={openPage}
+          onHighlightClick={openHighlight}
+          highlightInProgress={highlightInProgress}
+        />
       </div>
 
       {/* Right panel */}
@@ -114,11 +137,11 @@ export default function App() {
         )}
       </div>
 
-      {viewingPage && (
+      {viewingAsset && (
         <PlanViewerModal
-          pageName={viewingPage.page_name}
-          imageUrl={viewingPage.image_url}
-          onClose={() => setViewingPage(null)}
+          title={viewingAsset.title}
+          imageUrl={viewingAsset.image_url}
+          onClose={() => setViewingAsset(null)}
         />
       )}
     </div>

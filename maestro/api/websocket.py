@@ -148,14 +148,57 @@ def emit_finding(text: str, workspace_slug: str | None = None, source_page: str 
     })
 
 
-def emit_workspace_change(action: str, workspace_slug: str, detail: str = "") -> None:
+def emit_workspace_change(action: str, workspace_slug: str, detail: str = "", **payload: Any) -> None:
     """Emit a workspace state change (page_added, note_added, created)."""
-    broadcast_sync({
+    event: dict[str, Any] = {
         "type": "workspace",
         "action": action,
         "workspace_slug": workspace_slug,
         "detail": detail,
-    })
+    }
+    event.update(payload)
+    broadcast_sync(event)
+
+
+def emit_page_description_updated(workspace_slug: str, page_name: str, description: str) -> None:
+    """Emit page description update event."""
+    emit_workspace_change(
+        "page_description_updated",
+        workspace_slug,
+        detail=(description or "")[:140],
+        page_name=page_name,
+        description=(description or "")[:500],
+    )
+
+
+def emit_page_highlight_started(workspace_slug: str, page_name: str, mission: str) -> None:
+    """Emit page highlight start event."""
+    emit_workspace_change(
+        "page_highlight_started",
+        workspace_slug,
+        detail=(mission or "")[:140],
+        page_name=page_name,
+        mission=(mission or "")[:500],
+    )
+
+
+def emit_page_highlight_complete(
+    workspace_slug: str,
+    page_name: str,
+    highlight_id: int | None,
+    mission: str,
+    image_path: str,
+) -> None:
+    """Emit page highlight completion event."""
+    emit_workspace_change(
+        "page_highlight_complete",
+        workspace_slug,
+        detail=(mission or "")[:140],
+        page_name=page_name,
+        mission=(mission or "")[:500],
+        highlight_id=highlight_id,
+        image_path=image_path,
+    )
 
 
 def emit_schedule_change(action: str, event_id: str, title: str = "") -> None:

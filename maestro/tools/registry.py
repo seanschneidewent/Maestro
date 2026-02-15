@@ -5,8 +5,8 @@
 #
 # Each tool category lives in its own file:
 #   - knowledge.py  — search, list, read from knowledge store
-#   - vision.py     — see pages/pointers, dispatch Gemini vision agent
-#   - workspaces.py — workspace CRUD (create, add page, notes)
+#   - vision.py     — see pages, generate Gemini workspace highlights
+#   - workspaces.py — workspace CRUD (create, add page, notes, descriptions)
 #   - learning.py   — update experience, tool tips, knowledge corrections
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from tools import knowledge, workspaces, schedule
-from tools.vision import see_page, see_pointer, gemini_vision_agent
+from tools.vision import highlight_on_page, see_page
 from tools.learning import update_experience, update_tool_description, update_knowledge
 
 
@@ -33,7 +33,7 @@ def build_tool_registry(
     """
     # Initialize modules that need the project reference
     knowledge.project = project
-    workspaces.init_workspaces(project)
+    workspaces.init_workspaces(project, project_id)
     schedule.init_schedule(project_id=project_id)
 
     # --- Build function map ---
@@ -51,20 +51,20 @@ def build_tool_registry(
             return [{"type": "text", "text": "No project loaded."}]
         return see_page(page_name, project)
 
-    def _see_pointer(page_name: str, region_id: str) -> Any:
-        if not project:
-            return [{"type": "text", "text": "No project loaded."}]
-        return see_pointer(page_name, region_id, project)
-
-    def _gemini_vision_agent(page_name: str, mission: str) -> str:
+    def _highlight_on_page(workspace_slug: str, page_name: str, mission: str) -> dict[str, Any] | str:
         if not project:
             return "No project loaded."
-        print(f"\n  [Gemini Vision] Page: {page_name} | Mission: {mission[:80]}...")
-        return gemini_vision_agent(page_name, mission, project)
+        print(f"\n  [Highlight] Workspace: {workspace_slug} | Page: {page_name} | Mission: {mission[:80]}...")
+        return highlight_on_page(
+            workspace_slug=workspace_slug,
+            page_name=page_name,
+            mission=mission,
+            project=project,
+            project_id=project_id,
+        )
 
     functions["see_page"] = _see_page
-    functions["see_pointer"] = _see_pointer
-    functions["gemini_vision_agent"] = _gemini_vision_agent
+    functions["highlight_on_page"] = _highlight_on_page
 
     # Learning tools (wrapped with project for update_knowledge)
     def _update_experience(file: str, action: str, field: str, value: str, reasoning: str) -> str:
@@ -185,7 +185,6 @@ WORKSPACE_TOOL_DEFINITIONS = [
         "params": {
             "workspace_slug": {"type": "string", "required": True},
             "page_name": {"type": "string", "required": True},
-            "reason": {"type": "string", "required": True},
         },
     },
     {
@@ -205,6 +204,24 @@ WORKSPACE_TOOL_DEFINITIONS = [
             "source_page": {"type": "string", "description": "Optional source page name", "required": False},
         },
     },
+    {
+        "name": "add_description",
+        "description": "Set or clear a page description within a workspace",
+        "params": {
+            "workspace_slug": {"type": "string", "required": True},
+            "page_name": {"type": "string", "required": True},
+            "description": {"type": "string", "required": True},
+        },
+    },
+    {
+        "name": "remove_highlight",
+        "description": "Remove a generated highlight layer from a workspace page",
+        "params": {
+            "workspace_slug": {"type": "string", "required": True},
+            "page_name": {"type": "string", "required": True},
+            "highlight_id": {"type": "string", "required": True},
+        },
+    },
 ]
 
 VISION_TOOL_DEFINITIONS = [
@@ -214,19 +231,12 @@ VISION_TOOL_DEFINITIONS = [
         "params": {"page_name": {"type": "string", "required": True}},
     },
     {
-        "name": "see_pointer",
-        "description": "Look at a cropped region image to visually inspect a detail.",
+        "name": "highlight_on_page",
+        "description": "Generate a Gemini visual highlight layer for a page already in a workspace. Use this when you need to visually mark findings tied to a specific mission.",
         "params": {
+            "workspace_slug": {"type": "string", "required": True},
             "page_name": {"type": "string", "required": True},
-            "region_id": {"type": "string", "required": True},
-        },
-    },
-    {
-        "name": "gemini_vision_agent",
-        "description": "Dispatch Gemini as a vision specialist to deeply inspect a page. Use when you need pixel-level detail extraction, verification of specific claims, or finding something not in the knowledge store. Write a clear mission describing what to look for.",
-        "params": {
-            "page_name": {"type": "string", "required": True},
-            "mission": {"type": "string", "description": "What to look for, verify, or extract", "required": True},
+            "mission": {"type": "string", "description": "What to highlight and why", "required": True},
         },
     },
 ]

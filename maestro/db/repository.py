@@ -27,6 +27,7 @@ from .models import (
     Project,
     ScheduleEvent,
     Workspace,
+    WorkspaceHighlight,
     WorkspaceNote,
     WorkspacePage,
 )
@@ -41,11 +42,14 @@ def _emit_ws(fn_name, *args, **kwargs):
     """Best-effort WebSocket emit. No-op if websocket module not available."""
     try:
         from maestro.api.websocket import (
-            emit_message,
-            emit_workspace_change,
-            emit_schedule_change,
             emit_compaction,
             emit_engine_switch,
+            emit_message,
+            emit_page_description_updated,
+            emit_page_highlight_complete,
+            emit_page_highlight_started,
+            emit_schedule_change,
+            emit_workspace_change,
         )
         fn = {
             "message": emit_message,
@@ -53,6 +57,9 @@ def _emit_ws(fn_name, *args, **kwargs):
             "schedule": emit_schedule_change,
             "compaction": emit_compaction,
             "engine_switch": emit_engine_switch,
+            "page_description_updated": emit_page_description_updated,
+            "page_highlight_started": emit_page_highlight_started,
+            "page_highlight_complete": emit_page_highlight_complete,
         }.get(fn_name)
         if fn:
             fn(*args, **kwargs)
@@ -131,13 +138,12 @@ def list_workspaces(project_id: str) -> list[dict[str, Any]]:
 def get_workspace(project_id: str, slug: str) -> dict[str, Any] | None:
     """Get full workspace state by slug."""
     with get_session() as s:
-        w = (
-            s.query(Workspace)
-            .filter(and_(Workspace.project_id == project_id, Workspace.slug == slug))
-            .first()
-        )
+        w = _get_workspace_row(s, project_id, slug)
         if not w:
             return None
+
+        pages = sorted(w.pages, key=lambda p: p.added_at or _utcnow())
+
         return {
             "metadata": {
                 "title": w.title,
@@ -150,12 +156,20 @@ def get_workspace(project_id: str, slug: str) -> dict[str, Any] | None:
             "pages": [
                 {
                     "page_name": p.page_name,
-                    "reason": p.reason,
+                    "description": p.description or "",
                     "added_by": p.added_by,
                     "added_at": _iso(p.added_at),
-                    "regions_of_interest": json.loads(p.regions_of_interest or "[]"),
+                    "highlights": [
+                        {
+                            "id": h.id,
+                            "mission": h.mission,
+                            "image_path": h.image_path,
+                            "created_at": _iso(h.created_at),
+                        }
+                        for h in sorted(p.highlights, key=lambda h: h.created_at or _utcnow())
+                    ],
                 }
-                for p in w.pages
+                for p in pages
             ],
             "notes": [
                 {
@@ -238,30 +252,41 @@ def create_workspace(project_id: str, title: str, description: str, slug: str) -
         }
 
 
-def add_page(project_id: str, slug: str, page_name: str, reason: str) -> dict[str, Any] | str:
+def _get_workspace_row(s: Session, project_id: str, slug: str) -> Workspace | None:
+    return (
+        s.query(Workspace)
+        .filter(and_(Workspace.project_id == project_id, Workspace.slug == slug))
+        .first()
+    )
+
+
+def _get_workspace_page(
+    s: Session,
+    workspace_id: int,
+    page_name: str,
+) -> WorkspacePage | None:
+    return (
+        s.query(WorkspacePage)
+        .filter(and_(WorkspacePage.workspace_id == workspace_id, WorkspacePage.page_name == page_name))
+        .first()
+    )
+
+
+def add_page(project_id: str, slug: str, page_name: str) -> dict[str, Any] | str:
     """Add a page reference to a workspace."""
     with get_session() as s:
-        w = (
-            s.query(Workspace)
-            .filter(and_(Workspace.project_id == project_id, Workspace.slug == slug))
-            .first()
-        )
+        w = _get_workspace_row(s, project_id, slug)
         if not w:
             return f"Workspace '{slug}' not found."
 
-        # Check duplicate
-        existing = (
-            s.query(WorkspacePage)
-            .filter(and_(WorkspacePage.workspace_id == w.id, WorkspacePage.page_name == page_name))
-            .first()
-        )
+        existing = _get_workspace_page(s, w.id, page_name)
         if existing:
             return f"Page '{page_name}' is already in workspace '{slug}'."
 
         page = WorkspacePage(
             workspace_id=w.id,
             page_name=page_name,
-            reason=reason,
+            description="",
         )
         s.add(page)
         w.updated_at = _utcnow()
@@ -272,7 +297,7 @@ def add_page(project_id: str, slug: str, page_name: str, reason: str) -> dict[st
         return {
             "workspace_slug": slug,
             "page_name": page_name,
-            "reason": reason,
+            "description": "",
             "page_count": page_count,
         }
 
@@ -280,19 +305,11 @@ def add_page(project_id: str, slug: str, page_name: str, reason: str) -> dict[st
 def remove_page(project_id: str, slug: str, page_name: str) -> dict[str, Any] | str:
     """Remove a page reference from a workspace."""
     with get_session() as s:
-        w = (
-            s.query(Workspace)
-            .filter(and_(Workspace.project_id == project_id, Workspace.slug == slug))
-            .first()
-        )
+        w = _get_workspace_row(s, project_id, slug)
         if not w:
             return f"Workspace '{slug}' not found."
 
-        page = (
-            s.query(WorkspacePage)
-            .filter(and_(WorkspacePage.workspace_id == w.id, WorkspacePage.page_name == page_name))
-            .first()
-        )
+        page = _get_workspace_page(s, w.id, page_name)
         if not page:
             return f"Page '{page_name}' is not in workspace '{slug}'."
 
@@ -310,14 +327,163 @@ def remove_page(project_id: str, slug: str, page_name: str) -> dict[str, Any] | 
         }
 
 
+def add_description(
+    project_id: str,
+    slug: str,
+    page_name: str,
+    description: str,
+) -> dict[str, Any] | str:
+    """Set or clear a page description in a workspace."""
+    with get_session() as s:
+        w = _get_workspace_row(s, project_id, slug)
+        if not w:
+            return f"Workspace '{slug}' not found."
+
+        page = _get_workspace_page(s, w.id, page_name)
+        if not page:
+            return f"Page '{page_name}' is not in workspace '{slug}'."
+
+        clean_description = (description or "").strip()
+        page.description = clean_description
+        w.updated_at = _utcnow()
+        s.flush()
+
+        _emit_ws(
+            "page_description_updated",
+            workspace_slug=slug,
+            page_name=page_name,
+            description=clean_description,
+        )
+        return {
+            "workspace_slug": slug,
+            "page_name": page_name,
+            "description": clean_description,
+            "updated": True,
+        }
+
+
+def add_highlight(
+    project_id: str,
+    slug: str,
+    page_name: str,
+    mission: str,
+    image_path: str,
+) -> dict[str, Any] | str:
+    """Add a saved highlight image for a workspace page."""
+    with get_session() as s:
+        w = _get_workspace_row(s, project_id, slug)
+        if not w:
+            return f"Workspace '{slug}' not found."
+
+        page = _get_workspace_page(s, w.id, page_name)
+        if not page:
+            return f"Page '{page_name}' is not in workspace '{slug}'."
+
+        mission_text = mission.strip() if isinstance(mission, str) else ""
+        highlight = WorkspaceHighlight(
+            workspace_page_id=page.id,
+            mission=mission_text,
+            image_path=image_path,
+        )
+        s.add(highlight)
+        w.updated_at = _utcnow()
+        s.flush()
+
+        return {
+            "workspace_slug": slug,
+            "page_name": page_name,
+            "highlight": {
+                "id": highlight.id,
+                "mission": highlight.mission,
+                "image_path": highlight.image_path,
+                "created_at": _iso(highlight.created_at),
+            },
+        }
+
+
+def remove_highlight(
+    project_id: str,
+    slug: str,
+    page_name: str,
+    highlight_id: int,
+) -> dict[str, Any] | str:
+    """Remove a highlight from a workspace page."""
+    with get_session() as s:
+        w = _get_workspace_row(s, project_id, slug)
+        if not w:
+            return f"Workspace '{slug}' not found."
+
+        page = _get_workspace_page(s, w.id, page_name)
+        if not page:
+            return f"Page '{page_name}' is not in workspace '{slug}'."
+
+        highlight = (
+            s.query(WorkspaceHighlight)
+            .filter(
+                and_(
+                    WorkspaceHighlight.id == highlight_id,
+                    WorkspaceHighlight.workspace_page_id == page.id,
+                )
+            )
+            .first()
+        )
+        if not highlight:
+            return f"Highlight '{highlight_id}' not found on page '{page_name}'."
+
+        s.delete(highlight)
+        w.updated_at = _utcnow()
+        s.flush()
+
+        _emit_ws(
+            "workspace",
+            "highlight_removed",
+            slug,
+            detail=f"{page_name}:{highlight_id}",
+            page_name=page_name,
+            highlight_id=highlight_id,
+        )
+        return {
+            "workspace_slug": slug,
+            "page_name": page_name,
+            "highlight_id": highlight_id,
+            "removed": True,
+        }
+
+
+def get_highlight(project_id: str, slug: str, highlight_id: int) -> dict[str, Any] | None:
+    """Get a highlight by id, scoped to project + workspace."""
+    with get_session() as s:
+        row = (
+            s.query(WorkspaceHighlight, WorkspacePage, Workspace)
+            .join(WorkspacePage, WorkspaceHighlight.workspace_page_id == WorkspacePage.id)
+            .join(Workspace, WorkspacePage.workspace_id == Workspace.id)
+            .filter(
+                and_(
+                    WorkspaceHighlight.id == highlight_id,
+                    Workspace.project_id == project_id,
+                    Workspace.slug == slug,
+                )
+            )
+            .first()
+        )
+        if not row:
+            return None
+
+        highlight, page, workspace = row
+        return {
+            "id": highlight.id,
+            "workspace_slug": workspace.slug,
+            "page_name": page.page_name,
+            "mission": highlight.mission,
+            "image_path": highlight.image_path,
+            "created_at": _iso(highlight.created_at),
+        }
+
+
 def add_note(project_id: str, slug: str, text: str, source_page: str | None = None) -> dict[str, Any] | str:
     """Add a note to a workspace."""
     with get_session() as s:
-        w = (
-            s.query(Workspace)
-            .filter(and_(Workspace.project_id == project_id, Workspace.slug == slug))
-            .first()
-        )
+        w = _get_workspace_row(s, project_id, slug)
         if not w:
             return f"Workspace '{slug}' not found."
 

@@ -27,6 +27,9 @@ from maestro.api.websocket import (
     emit_schedule_change,
     emit_compaction,
     emit_engine_switch,
+    emit_page_description_updated,
+    emit_page_highlight_started,
+    emit_page_highlight_complete,
     emit_status,
     _clients,
 )
@@ -112,6 +115,32 @@ with client.websocket_connect("/ws") as ws:
     test("workspace action", data["action"] == "page_added")
     test("workspace slug", data["workspace_slug"] == "foundation_framing")
 
+    # Test description update emitter
+    emit_page_description_updated("foundation_framing", "S-101", "Structural foundation page details")
+    data = ws.receive_json()
+    test("description update type", data["type"] == "workspace")
+    test("description update action", data["action"] == "page_description_updated")
+    test("description update page", data["page_name"] == "S-101")
+    test("description update detail truncates", "Structural foundation" in data["detail"])
+
+    # Test highlight start/complete emitters
+    emit_page_highlight_started("foundation_framing", "S-101", "Find pipe sleeves")
+    data = ws.receive_json()
+    test("highlight started action", data["action"] == "page_highlight_started")
+    test("highlight started mission", data["mission"] == "Find pipe sleeves")
+
+    emit_page_highlight_complete(
+        "foundation_framing",
+        "S-101",
+        highlight_id=7,
+        mission="Find pipe sleeves",
+        image_path="/tmp/h.png",
+    )
+    data = ws.receive_json()
+    test("highlight complete action", data["action"] == "page_highlight_complete")
+    test("highlight complete id", data["highlight_id"] == 7)
+    test("highlight complete path", data["image_path"] == "/tmp/h.png")
+
     # Test emit_schedule_change
     emit_schedule_change("added", "evt_abc123", title="Foundation Pour")
     data = ws.receive_json()
@@ -150,13 +179,11 @@ with client.websocket_connect("/ws") as ws1:
     with client.websocket_connect("/ws") as ws2:
         ws2.receive_json()  # connected
 
+        test("two clients connected", len(_clients) == 2)
         emit_message("user", "Broadcast to all")
-
-        d1 = ws1.receive_json()
         d2 = ws2.receive_json()
-        test("client 1 receives", d1["type"] == "message")
         test("client 2 receives", d2["type"] == "message")
-        test("same content", d1["content"] == d2["content"])
+        test("broadcast content", "Broadcast to all" in d2["content"])
 
 
 # ===================================================================

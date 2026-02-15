@@ -14,7 +14,7 @@ The web frontend is the super's window into Maestro's brain — opened via links
                     │    FastAPI + Heartbeat Runner        │
                     │                                     │
   iMessage ◄──────►│  /sendblue-webhook   (inbound text)  │
-  (Sendblue)       │  /api/*              (REST, 14 endpoints)
+  (Sendblue)       │  /api/*              (REST, 15 endpoints)
                     │  /ws                (WebSocket push) │
                     │  /health, /stats    (server health)  │
                     └──────────┬──────────────────────────┘
@@ -30,11 +30,11 @@ The web frontend is the super's window into Maestro's brain — opened via links
               (Opus, Gemini, GPT)
                       │
                       ▼
-                 tools/* (29)
+                 tools/* (30)
               ┌────┬────┬────┬────┬────┐
               ▼    ▼    ▼    ▼    ▼    ▼
            know  vis  work sched learn switch
-           (10)  (3)  (6)  (6)   (3)   (1)
+           (10)  (2)  (8)  (6)   (3)   (1)
 ```
 
 ## Entry Point
@@ -73,11 +73,11 @@ Maestro/
 │   │   ├── conversation.py   # The one continuous thread — DB-backed + compaction
 │   │   └── sendblue.py       # iMessage API (send, typing indicator, formatting)
 │   │
-│   ├── tools/                # What Maestro can do (29 tools)
+│   ├── tools/                # What Maestro can do (30 tools)
 │   │   ├── registry.py       # Master tool list — single source of truth
 │   │   ├── knowledge.py      # 10 tools — search, read, cross-reference
-│   │   ├── vision.py         # 3 tools — see pages/pointers via Gemini vision
-│   │   ├── workspaces.py     # 6 tools — workspace CRUD (→ DB)
+│   │   ├── vision.py         # 2 tools — see pages + workspace highlights via Gemini
+│   │   ├── workspaces.py     # 8 tools — workspace CRUD + descriptions/highlights (→ DB)
 │   │   ├── schedule.py       # 6 tools — schedule management (→ DB)
 │   │   └── learning.py       # 3 tools — experience updates + audit log (→ DB)
 │   │   # + switch_engine: registered dynamically by conversation.py
@@ -127,7 +127,8 @@ Maestro/
 |-------|---------|
 | `projects` | One row per project (id, name, path) |
 | `workspaces` | Grouped page collections with status |
-| `workspace_pages` | Pages assigned to workspaces (with reason) |
+| `workspace_pages` | Pages assigned to workspaces (with per-page description) |
+| `workspace_highlights` | Gemini-generated highlight layers attached to workspace pages |
 | `workspace_notes` | Notes/findings attached to workspaces |
 | `schedule_events` | Timeline events (phases, milestones, deadlines) |
 | `messages` | Every message as individual rows (queryable, pageable) |
@@ -207,12 +208,12 @@ Super texts "switch to flash"
 
 ## API Layer
 
-### REST (14 endpoints, read-only)
+### REST (15 endpoints, read-only)
 
 All under `/api`, powered by the database + in-memory knowledge store:
 
 - **Project:** `GET /project` — metadata + knowledge stats + active engine
-- **Workspaces:** `GET /workspaces`, `GET /workspaces/:slug` — list + detail with pages/notes
+- **Workspaces:** `GET /workspaces`, `GET /workspaces/:slug`, `GET /workspaces/:slug/highlight/:highlight_id` — list/detail + highlight image bytes
 - **Schedule:** `GET /schedule`, `GET /schedule/upcoming?days=N`, `GET /schedule/:id`
 - **Conversation:** `GET /conversation` (state + stats), `GET /conversation/messages?limit=N&before=ID`
 - **Knowledge:** `GET /knowledge/disciplines`, `GET /knowledge/pages?discipline=X`, `GET /knowledge/pages/:name`, `GET /knowledge/search?q=X`

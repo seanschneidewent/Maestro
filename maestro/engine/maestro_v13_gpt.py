@@ -14,13 +14,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from dotenv import load_dotenv
 from openai import OpenAI
 
+from db import repository as repo
 from tools import tools_v13, workspaces
 from identity.experience_v13 import experience
 from knowledge.knowledge_v13 import load_project
 from identity.learning import learn, build_system_prompt as _build_experience_prompt
 from tools.tools_v13 import tool_definitions
 from tools.workspaces import workspace_tool_definitions, workspace_tool_functions
-from tools.vision import double_check_pointer, find_missing_pointer, see_page, see_pointer
+from tools.vision import highlight_on_page, see_page
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -56,10 +57,31 @@ def _build_openai_tools() -> list[dict[str, Any]]:
     return tools
 
 
+vision_tool_definitions = [
+    {
+        "name": "see_page",
+        "description": "Look at the full page image yourself to visually inspect it.",
+        "params": {"page_name": {"type": "string", "required": True}},
+    },
+    {
+        "name": "highlight_on_page",
+        "description": "Generate a Gemini visual highlight layer for a page already in a workspace.",
+        "params": {
+            "workspace_slug": {"type": "string", "required": True},
+            "page_name": {"type": "string", "required": True},
+            "mission": {"type": "string", "description": "What to highlight and why", "required": True},
+        },
+    },
+]
+
+
 project = load_project()
+project_name = project.get("name", "default") if project else "default"
+project_row = repo.get_or_create_project(project_name)
+project_id = project_row["id"]
 tools_v13.project = project
-workspaces.init_workspaces(project)
-all_tool_definitions = tool_definitions + workspace_tool_definitions
+workspaces.init_workspaces(project, project_id)
+all_tool_definitions = tool_definitions + workspace_tool_definitions + vision_tool_definitions
 tool_functions = dict(tools_v13.tool_functions)
 tool_functions.update(workspace_tool_functions)
 
@@ -77,25 +99,12 @@ def see_page_tool(page_name: str) -> str:
     return see_page(page_name, project)
 
 
-def see_pointer_tool(page_name: str, region_id: str) -> str:
+def highlight_on_page_tool(workspace_slug: str, page_name: str, mission: str) -> dict[str, Any] | str:
     err = _project_required()
     if err:
         return err
-    return see_pointer(page_name, region_id, project)
-
-
-def find_missing_pointer_tool(page_name: str, mission: str) -> str:
-    err = _project_required()
-    if err:
-        return err
-    return find_missing_pointer(page_name, mission, project)
-
-
-def double_check_pointer_tool(page_name: str, region_id: str, mission: str) -> str:
-    err = _project_required()
-    if err:
-        return err
-    return double_check_pointer(page_name, region_id, mission, project)
+    print(f"\n  [Highlight] Workspace: {workspace_slug} | Page: {page_name} | Mission: {mission[:80]}...")
+    return highlight_on_page(workspace_slug, page_name, mission, project, project_id)
 
 
 def learn_tool(learning_mission: str) -> str:
@@ -105,9 +114,7 @@ def learn_tool(learning_mission: str) -> str:
 
 
 tool_functions["see_page"] = see_page_tool
-tool_functions["see_pointer"] = see_pointer_tool
-tool_functions["find_missing_pointer"] = find_missing_pointer_tool
-tool_functions["double_check_pointer"] = double_check_pointer_tool
+tool_functions["highlight_on_page"] = highlight_on_page_tool
 tool_functions["learn"] = learn_tool
 
 

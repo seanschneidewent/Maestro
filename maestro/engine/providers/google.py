@@ -135,7 +135,7 @@ def _execute_tool(func_name: str, func_args: dict, tool_functions: dict) -> Any:
             # Gemini doesn't support multimodal tool results — convert images to text
             if isinstance(result, list) and result and isinstance(result[0], dict):
                 if any(item.get("type") == "image" for item in result):
-                    return "Image returned. Gemini cannot view images in tool results — use gemini_vision_agent tool instead for visual inspection."
+                    return "Image returned. Gemini cannot view images in tool results — use highlight_on_page for visual overlays."
             return result
         except Exception as exc:
             return f"Tool execution error: {exc}"

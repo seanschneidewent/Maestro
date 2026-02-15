@@ -9,6 +9,7 @@
 #   GET /api/project                    — Project metadata
 #   GET /api/workspaces                 — List all workspaces
 #   GET /api/workspaces/:slug           — Full workspace (metadata + pages + notes)
+#   GET /api/workspaces/:slug/highlight/:highlight_id — Workspace highlight image (png)
 #   GET /api/schedule                   — All events (with optional filters)
 #   GET /api/schedule/upcoming          — Next N days
 #   GET /api/schedule/:event_id         — Single event
@@ -23,9 +24,11 @@
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import FileResponse
 
 from maestro.db import repository as repo
 
@@ -188,6 +191,21 @@ async def get_workspace(slug: str):
     return ws
 
 
+@api_router.get("/workspaces/{slug}/highlight/{highlight_id}")
+async def get_workspace_highlight(slug: str, highlight_id: int):
+    pid = _require_pid()
+    resolved_slug = repo.resolve_workspace_slug(pid, slug) or slug
+    highlight = repo.get_highlight(pid, resolved_slug, highlight_id)
+    if not highlight:
+        raise HTTPException(status_code=404, detail=f"Highlight '{highlight_id}' not found in workspace '{slug}'")
+
+    image_path = Path(highlight["image_path"])
+    if not image_path.exists() or not image_path.is_file():
+        raise HTTPException(status_code=404, detail=f"Highlight image file is missing for id '{highlight_id}'")
+
+    return FileResponse(str(image_path), media_type="image/png")
+
+
 # ===================================================================
 # Schedule
 # ===================================================================
@@ -340,8 +358,6 @@ async def get_page_thumb(
     q: int = Query(80, ge=10, le=100, description="JPEG quality"),
 ):
     """Return a resized JPEG thumbnail of a plan page. Cached to disk after first gen."""
-    from pathlib import Path
-    from fastapi.responses import FileResponse
     from PIL import Image
 
     if not _project:
