@@ -9,7 +9,6 @@
 #   GET /api/project                    — Project metadata
 #   GET /api/workspaces                 — List all workspaces
 #   GET /api/workspaces/:slug           — Full workspace (metadata + pages + notes)
-#   GET /api/workspaces/:slug/highlight/:highlight_id — Workspace highlight image (png)
 #   GET /api/schedule                   — All events (with optional filters)
 #   GET /api/schedule/upcoming          — Next N days
 #   GET /api/schedule/:event_id         — Single event
@@ -189,21 +188,6 @@ async def get_workspace(slug: str):
     if not ws:
         raise HTTPException(status_code=404, detail=f"Workspace '{slug}' not found")
     return ws
-
-
-@api_router.get("/workspaces/{slug}/highlight/{highlight_id}")
-async def get_workspace_highlight(slug: str, highlight_id: int):
-    pid = _require_pid()
-    resolved_slug = repo.resolve_workspace_slug(pid, slug) or slug
-    highlight = repo.get_highlight(pid, resolved_slug, highlight_id)
-    if not highlight:
-        raise HTTPException(status_code=404, detail=f"Highlight '{highlight_id}' not found in workspace '{slug}'")
-
-    image_path = Path(highlight["image_path"])
-    if not image_path.exists() or not image_path.is_file():
-        raise HTTPException(status_code=404, detail=f"Highlight image file is missing for id '{highlight_id}'")
-
-    return FileResponse(str(image_path), media_type="image/png")
 
 
 # ===================================================================

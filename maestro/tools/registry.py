@@ -5,7 +5,7 @@
 #
 # Each tool category lives in its own file:
 #   - knowledge.py  — search, list, read from knowledge store
-#   - vision.py     — see pages, generate Gemini workspace highlights
+#   - vision.py     — async Gemini workspace highlights
 #   - workspaces.py — workspace CRUD (create, add page, notes, descriptions)
 #   - learning.py   — update experience, tool tips, knowledge corrections
 
@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from tools import knowledge, workspaces, schedule
-from tools.vision import highlight_on_page, see_page
+from tools.vision import highlight_pages
 from tools.learning import update_experience, update_tool_description, update_knowledge
 
 
@@ -45,26 +45,20 @@ def build_tool_registry(
     # Workspace tools
     functions.update(workspaces.workspace_tool_functions)
 
-    # Vision tools (wrapped with project)
-    def _see_page(page_name: str) -> Any:
-        if not project:
-            return [{"type": "text", "text": "No project loaded."}]
-        return see_page(page_name, project)
-
-    def _highlight_on_page(workspace_slug: str, page_name: str, mission: str) -> dict[str, Any] | str:
+    # Vision tool (wrapped with project)
+    def _highlight_pages(workspace_slug: str, page_missions: list[dict[str, Any]]) -> dict[str, Any] | str:
         if not project:
             return "No project loaded."
-        print(f"\n  [Highlight] Workspace: {workspace_slug} | Page: {page_name} | Mission: {mission[:80]}...")
-        return highlight_on_page(
+        mission_count = len(page_missions) if isinstance(page_missions, list) else 0
+        print(f"\n  [Highlight] Workspace: {workspace_slug} | Missions: {mission_count}")
+        return highlight_pages(
             workspace_slug=workspace_slug,
-            page_name=page_name,
-            mission=mission,
+            page_missions=page_missions,
             project=project,
             project_id=project_id,
         )
 
-    functions["see_page"] = _see_page
-    functions["highlight_on_page"] = _highlight_on_page
+    functions["highlight_pages"] = _highlight_pages
 
     # Learning tools (wrapped with project for update_knowledge)
     def _update_experience(file: str, action: str, field: str, value: str, reasoning: str) -> str:
@@ -226,17 +220,15 @@ WORKSPACE_TOOL_DEFINITIONS = [
 
 VISION_TOOL_DEFINITIONS = [
     {
-        "name": "see_page",
-        "description": "Look at the full page image yourself to visually inspect it.",
-        "params": {"page_name": {"type": "string", "required": True}},
-    },
-    {
-        "name": "highlight_on_page",
-        "description": "Generate a Gemini visual highlight layer for a page already in a workspace. Use this when you need to visually mark findings tied to a specific mission.",
+        "name": "highlight_pages",
+        "description": "Spawn async Gemini highlight agents for pages in a workspace. Returns immediately while highlights run in background.",
         "params": {
             "workspace_slug": {"type": "string", "required": True},
-            "page_name": {"type": "string", "required": True},
-            "mission": {"type": "string", "description": "What to highlight and why", "required": True},
+            "page_missions": {
+                "type": "array",
+                "description": "List of highlight missions in the format [{page_name, mission}]",
+                "required": True,
+            },
         },
     },
 ]

@@ -47,6 +47,7 @@ def _emit_ws(fn_name, *args, **kwargs):
             emit_message,
             emit_page_description_updated,
             emit_page_highlight_complete,
+            emit_page_highlight_failed,
             emit_page_highlight_started,
             emit_schedule_change,
             emit_workspace_change,
@@ -60,6 +61,7 @@ def _emit_ws(fn_name, *args, **kwargs):
             "page_description_updated": emit_page_description_updated,
             "page_highlight_started": emit_page_highlight_started,
             "page_highlight_complete": emit_page_highlight_complete,
+            "page_highlight_failed": emit_page_highlight_failed,
         }.get(fn_name)
         if fn:
             fn(*args, **kwargs)
@@ -75,6 +77,57 @@ def _iso(dt: datetime | None) -> str:
     if dt is None:
         return ""
     return dt.isoformat()
+
+
+def _sanitize_bbox(value: Any) -> dict[str, float] | None:
+    if not isinstance(value, dict):
+        return None
+    try:
+        x = float(value.get("x", 0.0))
+        y = float(value.get("y", 0.0))
+        width = float(value.get("width", 0.0))
+        height = float(value.get("height", 0.0))
+    except (TypeError, ValueError):
+        return None
+
+    x = max(0.0, min(1.0, x))
+    y = max(0.0, min(1.0, y))
+    width = max(0.0, min(1.0 - x, width))
+    height = max(0.0, min(1.0 - y, height))
+    if width <= 0 or height <= 0:
+        return None
+
+    return {
+        "x": round(x, 6),
+        "y": round(y, 6),
+        "width": round(width, 6),
+        "height": round(height, 6),
+    }
+
+
+def _normalize_bboxes(value: Any) -> list[dict[str, float]]:
+    if not isinstance(value, list):
+        return []
+    normalized: list[dict[str, float]] = []
+    for item in value:
+        bbox = _sanitize_bbox(item)
+        if bbox is not None:
+            normalized.append(bbox)
+    return normalized
+
+
+def _serialize_bboxes(value: Any) -> str:
+    return json.dumps(_normalize_bboxes(value), separators=(",", ":"), ensure_ascii=True)
+
+
+def _deserialize_bboxes(raw: str | None) -> list[dict[str, float]]:
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+    except (TypeError, json.JSONDecodeError):
+        return []
+    return _normalize_bboxes(parsed)
 
 
 # ===================================================================
@@ -163,7 +216,8 @@ def get_workspace(project_id: str, slug: str) -> dict[str, Any] | None:
                         {
                             "id": h.id,
                             "mission": h.mission,
-                            "image_path": h.image_path,
+                            "status": h.status or "pending",
+                            "bboxes": _deserialize_bboxes(h.bboxes),
                             "created_at": _iso(h.created_at),
                         }
                         for h in sorted(p.highlights, key=lambda h: h.created_at or _utcnow())
@@ -367,9 +421,8 @@ def add_highlight(
     slug: str,
     page_name: str,
     mission: str,
-    image_path: str,
 ) -> dict[str, Any] | str:
-    """Add a saved highlight image for a workspace page."""
+    """Create a pending highlight for a workspace page."""
     with get_session() as s:
         w = _get_workspace_row(s, project_id, slug)
         if not w:
@@ -383,7 +436,8 @@ def add_highlight(
         highlight = WorkspaceHighlight(
             workspace_page_id=page.id,
             mission=mission_text,
-            image_path=image_path,
+            status="pending",
+            bboxes="[]",
         )
         s.add(highlight)
         w.updated_at = _utcnow()
@@ -395,9 +449,47 @@ def add_highlight(
             "highlight": {
                 "id": highlight.id,
                 "mission": highlight.mission,
-                "image_path": highlight.image_path,
+                "status": highlight.status,
+                "bboxes": [],
                 "created_at": _iso(highlight.created_at),
             },
+        }
+
+
+def complete_highlight(highlight_id: int, bboxes: list[dict[str, Any]]) -> dict[str, Any] | str:
+    """Mark a highlight complete and persist normalized bbox payload."""
+    with get_session() as s:
+        highlight = s.query(WorkspaceHighlight).filter(WorkspaceHighlight.id == highlight_id).first()
+        if not highlight:
+            return f"Highlight '{highlight_id}' not found."
+
+        highlight.status = "complete"
+        highlight.bboxes = _serialize_bboxes(bboxes)
+        s.flush()
+
+        return {
+            "id": highlight.id,
+            "status": highlight.status,
+            "bboxes": _deserialize_bboxes(highlight.bboxes),
+            "created_at": _iso(highlight.created_at),
+        }
+
+
+def fail_highlight(highlight_id: int) -> dict[str, Any] | str:
+    """Mark a highlight as failed."""
+    with get_session() as s:
+        highlight = s.query(WorkspaceHighlight).filter(WorkspaceHighlight.id == highlight_id).first()
+        if not highlight:
+            return f"Highlight '{highlight_id}' not found."
+
+        highlight.status = "failed"
+        s.flush()
+
+        return {
+            "id": highlight.id,
+            "status": highlight.status,
+            "bboxes": _deserialize_bboxes(highlight.bboxes),
+            "created_at": _iso(highlight.created_at),
         }
 
 
@@ -475,7 +567,8 @@ def get_highlight(project_id: str, slug: str, highlight_id: int) -> dict[str, An
             "workspace_slug": workspace.slug,
             "page_name": page.page_name,
             "mission": highlight.mission,
-            "image_path": highlight.image_path,
+            "status": highlight.status or "pending",
+            "bboxes": _deserialize_bboxes(highlight.bboxes),
             "created_at": _iso(highlight.created_at),
         }
 

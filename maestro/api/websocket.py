@@ -171,13 +171,19 @@ def emit_page_description_updated(workspace_slug: str, page_name: str, descripti
     )
 
 
-def emit_page_highlight_started(workspace_slug: str, page_name: str, mission: str) -> None:
+def emit_page_highlight_started(
+    workspace_slug: str,
+    page_name: str,
+    highlight_id: int | None,
+    mission: str,
+) -> None:
     """Emit page highlight start event."""
     emit_workspace_change(
         "page_highlight_started",
         workspace_slug,
         detail=(mission or "")[:140],
         page_name=page_name,
+        highlight_id=highlight_id,
         mission=(mission or "")[:500],
     )
 
@@ -187,7 +193,7 @@ def emit_page_highlight_complete(
     page_name: str,
     highlight_id: int | None,
     mission: str,
-    image_path: str,
+    bboxes: list[dict[str, float]] | None = None,
 ) -> None:
     """Emit page highlight completion event."""
     emit_workspace_change(
@@ -197,7 +203,22 @@ def emit_page_highlight_complete(
         page_name=page_name,
         mission=(mission or "")[:500],
         highlight_id=highlight_id,
-        image_path=image_path,
+        bboxes=bboxes or [],
+    )
+
+
+def emit_page_highlight_failed(
+    workspace_slug: str,
+    page_name: str,
+    highlight_id: int | None,
+) -> None:
+    """Emit page highlight failure event."""
+    emit_workspace_change(
+        "page_highlight_failed",
+        workspace_slug,
+        detail=f"{page_name}:{highlight_id}",
+        page_name=page_name,
+        highlight_id=highlight_id,
     )
 
 

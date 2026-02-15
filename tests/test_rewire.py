@@ -210,17 +210,11 @@ test("notes persisted", len(ws_final["notes"]) == 3)
 test("note text correct", ws_final["notes"][0]["text"].startswith("3-inch pipe sleeves"))
 
 # Highlights remove through workspace tool
-highlight_file = Path(__file__).resolve().parent / ".tmp_highlight.png"
-highlight_file.write_bytes(b"fakepng")
-added_highlight = repo.add_highlight(PID, "foundation_framing", "VC-201 Vapor Mitigation Plan", "Find sleeves", str(highlight_file))
+added_highlight = repo.add_highlight(PID, "foundation_framing", "VC-201 Vapor Mitigation Plan", "Find sleeves")
 test("add highlight for remove test", isinstance(added_highlight, dict))
 hid = added_highlight["highlight"]["id"] if isinstance(added_highlight, dict) else -1
 removed_highlight = remove_highlight("foundation_framing", "VC-201 Vapor Mitigation Plan", hid)
 test("remove_highlight success", isinstance(removed_highlight, dict) and removed_highlight["removed"] is True)
-try:
-    highlight_file.unlink()
-except OSError:
-    pass
 
 # --- No project loaded ---
 print("\n  -- no project edge cases --")
@@ -359,9 +353,9 @@ from maestro.tools.registry import build_tool_registry
 defs, funcs = build_tool_registry(MOCK_PROJECT, project_id=PID)
 
 test("definitions is list", isinstance(defs, list))
-test("29 tool definitions", len(defs) == 29, f"got {len(defs)}")
+test("28 tool definitions", len(defs) == 28, f"got {len(defs)}")
 test("functions is dict", isinstance(funcs, dict))
-test("29 tool functions", len(funcs) == 29, f"got {len(funcs)}")
+test("28 tool functions", len(funcs) == 28, f"got {len(funcs)}")
 
 # Check all definition names have matching functions
 def_names = {d["name"] for d in defs}
@@ -371,7 +365,7 @@ test("all defs have funcs", def_names == func_names, f"missing: {def_names - fun
 # Key tools present
 for tool_name in ["create_workspace", "list_workspaces", "add_page", "add_note", "add_description", "remove_highlight",
                    "list_events", "add_event", "upcoming",
-                   "search", "see_page", "highlight_on_page",
+                   "search", "highlight_pages",
                    "update_experience", "update_knowledge"]:
     test(f"tool '{tool_name}' registered", tool_name in func_names)
 

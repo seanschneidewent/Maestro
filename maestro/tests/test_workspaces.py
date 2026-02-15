@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import os
 import sys
-import tempfile
 import unittest
 import uuid
 from pathlib import Path
 
-MAESTRO_DIR = Path(__file__).resolve().parents[1]
-if str(MAESTRO_DIR) not in sys.path:
-    sys.path.insert(0, str(MAESTRO_DIR))
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 os.environ["DATABASE_URL"] = "sqlite://"
 
@@ -167,16 +166,11 @@ class WorkspaceToolsTests(unittest.TestCase):
         workspaces.create_workspace("Walk-In Cooler Install", "Equipment scope")
         workspaces.add_page("walk_in_cooler_install", "K_211")
 
-        tmpdir = Path(tempfile.mkdtemp(prefix="maestro_tool_highlight_"))
-        image_path = tmpdir / "h.png"
-        image_path.write_bytes(b"fakepng")
-
         added = repo.add_highlight(
             self.pid,
             "walk_in_cooler_install",
             "K_211_ENLARGED_EQUIPMENT_FLOOR_PLAN_p001",
             "Find rough-in",
-            str(image_path),
         )
         self.assertIsInstance(added, dict)
 

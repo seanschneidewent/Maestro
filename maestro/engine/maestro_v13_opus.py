@@ -26,7 +26,7 @@ from identity.learning import (
 )
 from tools.tools_v13 import tool_definitions
 from tools.workspaces import workspace_tool_definitions, workspace_tool_functions
-from tools.vision import highlight_on_page, see_page
+from tools.vision import highlight_pages
 
 load_dotenv()
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
@@ -52,17 +52,11 @@ def _json_schema_from_params(params: dict[str, Any]) -> dict[str, Any]:
 
 vision_tool_definitions = [
     {
-        "name": "see_page",
-        "description": "Look at the full page image yourself to visually inspect it.",
-        "params": {"page_name": {"type": "string", "required": True}},
-    },
-    {
-        "name": "highlight_on_page",
-        "description": "Generate a Gemini visual highlight layer for a page already in a workspace.",
+        "name": "highlight_pages",
+        "description": "Spawn async Gemini highlight agents for workspace pages.",
         "params": {
             "workspace_slug": {"type": "string", "required": True},
-            "page_name": {"type": "string", "required": True},
-            "mission": {"type": "string", "description": "What to highlight and why", "required": True},
+            "page_missions": {"type": "array", "description": "List of {page_name, mission}", "required": True},
         },
     },
 ]
@@ -132,21 +126,14 @@ def _project_required() -> str | None:
     return None
 
 
-# --- Vision tool wrappers ---
+# --- Vision tool wrapper ---
 
-def see_page_tool(page_name: str) -> Any:
+def highlight_pages_tool(workspace_slug: str, page_missions: list[dict[str, Any]]) -> dict[str, Any] | str:
     err = _project_required()
     if err:
         return err
-    return see_page(page_name, project)
-
-
-def highlight_on_page_tool(workspace_slug: str, page_name: str, mission: str) -> dict[str, Any] | str:
-    err = _project_required()
-    if err:
-        return err
-    print(f"\n  [Highlight] Workspace: {workspace_slug} | Page: {page_name} | Mission: {mission[:80]}...")
-    return highlight_on_page(workspace_slug, page_name, mission, project, project_id)
+    print(f"\n  [Highlight] Workspace: {workspace_slug} | Missions: {len(page_missions) if isinstance(page_missions, list) else 0}")
+    return highlight_pages(workspace_slug, page_missions, project, project_id)
 
 
 # --- Learning tool wrappers ---
@@ -170,8 +157,7 @@ def update_knowledge_tool(page_name: str, field: str, value: str, reasoning: str
     return update_knowledge(page_name, field, value, reasoning, region_id=region_id, project=project)
 
 
-tool_functions["see_page"] = see_page_tool
-tool_functions["highlight_on_page"] = highlight_on_page_tool
+tool_functions["highlight_pages"] = highlight_pages_tool
 tool_functions["update_experience"] = update_experience_tool
 tool_functions["update_tool_description"] = update_tool_description_tool
 tool_functions["update_knowledge"] = update_knowledge_tool

@@ -30,6 +30,7 @@ from maestro.api.websocket import (
     emit_page_description_updated,
     emit_page_highlight_started,
     emit_page_highlight_complete,
+    emit_page_highlight_failed,
     emit_status,
     _clients,
 )
@@ -124,9 +125,10 @@ with client.websocket_connect("/ws") as ws:
     test("description update detail truncates", "Structural foundation" in data["detail"])
 
     # Test highlight start/complete emitters
-    emit_page_highlight_started("foundation_framing", "S-101", "Find pipe sleeves")
+    emit_page_highlight_started("foundation_framing", "S-101", highlight_id=7, mission="Find pipe sleeves")
     data = ws.receive_json()
     test("highlight started action", data["action"] == "page_highlight_started")
+    test("highlight started id", data["highlight_id"] == 7)
     test("highlight started mission", data["mission"] == "Find pipe sleeves")
 
     emit_page_highlight_complete(
@@ -134,12 +136,17 @@ with client.websocket_connect("/ws") as ws:
         "S-101",
         highlight_id=7,
         mission="Find pipe sleeves",
-        image_path="/tmp/h.png",
+        bboxes=[{"x": 0.1, "y": 0.2, "width": 0.25, "height": 0.12}],
     )
     data = ws.receive_json()
     test("highlight complete action", data["action"] == "page_highlight_complete")
     test("highlight complete id", data["highlight_id"] == 7)
-    test("highlight complete path", data["image_path"] == "/tmp/h.png")
+    test("highlight complete bboxes", isinstance(data["bboxes"], list) and len(data["bboxes"]) == 1)
+
+    emit_page_highlight_failed("foundation_framing", "S-101", highlight_id=8)
+    data = ws.receive_json()
+    test("highlight failed action", data["action"] == "page_highlight_failed")
+    test("highlight failed id", data["highlight_id"] == 8)
 
     # Test emit_schedule_change
     emit_schedule_change("added", "evt_abc123", title="Foundation Pour")

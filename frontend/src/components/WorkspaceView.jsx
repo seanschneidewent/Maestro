@@ -1,81 +1,138 @@
-import { FileText, Clock, MessageSquare, Sparkles, ImageOff, LoaderCircle } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { FileText, Clock, MessageSquare, Sparkles, LoaderCircle, AlertCircle } from 'lucide-react'
 import { api } from '../lib/api'
-import { useState } from 'react'
 
-function HighlightThumb({ workspaceSlug, pageName, highlight, onOpen }) {
+const OVERLAY_COLORS = [
+  'rgba(14, 165, 233, 0.25)',
+  'rgba(34, 197, 94, 0.24)',
+  'rgba(245, 158, 11, 0.24)',
+  'rgba(239, 68, 68, 0.22)',
+  'rgba(168, 85, 247, 0.22)',
+  'rgba(20, 184, 166, 0.24)',
+]
+
+const OVERLAY_BORDERS = [
+  'rgba(2, 132, 199, 0.95)',
+  'rgba(21, 128, 61, 0.95)',
+  'rgba(180, 83, 9, 0.95)',
+  'rgba(185, 28, 28, 0.9)',
+  'rgba(126, 34, 206, 0.9)',
+  'rgba(15, 118, 110, 0.95)',
+]
+
+function PageCard({ page, onPageClick, pendingOverlayCount = 0 }) {
+  const thumbUrl = api.getPageThumbUrl(page.page_name, 1000)
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState(false)
+  const [activeBoxKey, setActiveBoxKey] = useState(null)
 
-  const imageUrl = api.getWorkspaceHighlightUrl(workspaceSlug, highlight.id)
-
-  return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation()
-        onOpen({
-          title: `${pageName} · Highlight ${highlight.id}`,
-          imageUrl,
-        })
-      }}
-      className="group shrink-0 w-28 h-20 rounded-lg overflow-hidden border border-slate-300 bg-slate-100 relative"
-      title={highlight.mission || `Highlight ${highlight.id}`}
-    >
-      {!error ? (
-        <>
-          {!loaded && (
-            <div className="absolute inset-0 flex items-center justify-center text-slate-400">
-              <LoaderCircle size={16} className="animate-spin" />
-            </div>
-          )}
-          <img
-            src={imageUrl}
-            alt={highlight.mission || `Highlight ${highlight.id}`}
-            className={`w-full h-full object-cover transition ${loaded ? 'opacity-100 group-hover:scale-105' : 'opacity-0'}`}
-            onLoad={() => setLoaded(true)}
-            onError={() => setError(true)}
-            loading="lazy"
-          />
-        </>
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center text-slate-400">
-          <ImageOff size={14} />
-        </div>
-      )}
-    </button>
+  const highlights = useMemo(
+    () => (Array.isArray(page.highlights) ? page.highlights : []),
+    [page.highlights],
   )
-}
+  const pendingFromPayload = highlights.filter(h => (h.status || 'pending') === 'pending').length
+  const failedCount = highlights.filter(h => h.status === 'failed').length
+  const hasPending = pendingFromPayload > 0 || pendingOverlayCount > 0
 
-function PageCard({ workspaceSlug, page, onPageClick, onHighlightClick, isHighlighting }) {
-  const thumbUrl = api.getPageThumbUrl(page.page_name, 800)
-  const [loaded, setLoaded] = useState(false)
-  const [error, setError] = useState(false)
+  const overlayBoxes = useMemo(() => {
+    const complete = highlights
+      .filter(h => h.status === 'complete' && Array.isArray(h.bboxes) && h.bboxes.length > 0)
+      .sort((a, b) => Number(a.id) - Number(b.id))
 
-  const highlights = Array.isArray(page.highlights) ? page.highlights : []
+    return complete.flatMap((highlight, hIndex) => {
+      const fill = OVERLAY_COLORS[hIndex % OVERLAY_COLORS.length]
+      const border = OVERLAY_BORDERS[hIndex % OVERLAY_BORDERS.length]
+      return highlight.bboxes
+        .map((bbox, bIndex) => {
+          const x = Number(bbox?.x)
+          const y = Number(bbox?.y)
+          const width = Number(bbox?.width)
+          const height = Number(bbox?.height)
+          if (![x, y, width, height].every(Number.isFinite)) return null
+          if (width <= 0 || height <= 0) return null
+          return {
+            key: `${highlight.id}-${bIndex}`,
+            mission: highlight.mission || `Highlight ${highlight.id}`,
+            style: {
+              left: `${Math.max(0, Math.min(1, x)) * 100}%`,
+              top: `${Math.max(0, Math.min(1, y)) * 100}%`,
+              width: `${Math.max(0, Math.min(1, width)) * 100}%`,
+              height: `${Math.max(0, Math.min(1, height)) * 100}%`,
+              backgroundColor: fill,
+              borderColor: border,
+            },
+          }
+        })
+        .filter(Boolean)
+    })
+  }, [highlights])
+
+  const activeMission = overlayBoxes.find(box => box.key === activeBoxKey)?.mission || null
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-      <button
+      <div
         onClick={() => onPageClick(page.page_name)}
-        className="w-full text-left"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onPageClick(page.page_name)
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        className="w-full text-left cursor-pointer"
       >
-        <div className="h-56 bg-slate-100 flex items-center justify-center overflow-hidden relative">
+        <div className="relative bg-slate-100">
           {!error ? (
             <>
-              {!loaded && <FileText size={32} className="text-slate-300 absolute" />}
+              {!loaded && (
+                <div className="w-full min-h-44 flex items-center justify-center">
+                  <FileText size={32} className="text-slate-300" />
+                </div>
+              )}
               <img
                 src={thumbUrl}
                 alt={page.page_name}
-                className={`w-full h-full object-cover ${loaded ? '' : 'opacity-0'}`}
+                className={`w-full h-auto block ${loaded ? '' : 'opacity-0'}`}
                 onLoad={() => setLoaded(true)}
                 onError={() => setError(true)}
                 loading="lazy"
               />
+
+              {loaded && overlayBoxes.length > 0 && (
+                <div className="absolute inset-0 pointer-events-none">
+                  {overlayBoxes.map((box) => (
+                    <div
+                      key={box.key}
+                      className="absolute border-2 rounded-sm pointer-events-auto"
+                      style={box.style}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setActiveBoxKey(prev => (prev === box.key ? null : box.key))
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setActiveBoxKey(prev => (prev === box.key ? null : box.key))
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      title={box.mission}
+                    />
+                  ))}
+                </div>
+              )}
             </>
           ) : (
-            <FileText size={32} className="text-slate-300" />
+            <div className="w-full min-h-44 flex items-center justify-center">
+              <FileText size={32} className="text-slate-300" />
+            </div>
           )}
         </div>
-      </button>
+      </div>
 
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
@@ -92,34 +149,43 @@ function PageCard({ workspaceSlug, page, onPageClick, onHighlightClick, isHighli
           <p className="text-xs text-slate-400 mt-2">No description yet.</p>
         )}
 
-        <div className="mt-3 pt-3 border-t border-slate-200">
+        <div className="mt-3 pt-3 border-t border-slate-200 space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Highlights</p>
             <span className="text-[11px] text-slate-500">{highlights.length}</span>
           </div>
 
-          <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-            {highlights.map((highlight) => (
-              <HighlightThumb
-                key={highlight.id}
-                workspaceSlug={workspaceSlug}
-                pageName={page.page_name}
-                highlight={highlight}
-                onOpen={onHighlightClick}
-              />
-            ))}
-
-            {isHighlighting && (
-              <div className="shrink-0 w-28 h-20 rounded-lg border border-dashed border-amber-300 bg-amber-50 flex flex-col items-center justify-center text-amber-700">
-                <LoaderCircle size={14} className="animate-spin" />
-                <span className="text-[10px] mt-1">In progress</span>
-              </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {overlayBoxes.length > 0 && (
+              <span className="text-[11px] px-2 py-1 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200">
+                {overlayBoxes.length} overlay box{overlayBoxes.length === 1 ? '' : 'es'}
+              </span>
             )}
 
-            {highlights.length === 0 && !isHighlighting && (
-              <div className="text-xs text-slate-400 py-5">No highlights yet</div>
+            {hasPending && (
+              <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full border border-dashed border-amber-300 bg-amber-50 text-amber-700">
+                <LoaderCircle size={12} className="animate-spin" />
+                In progress
+              </span>
+            )}
+
+            {failedCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full border border-rose-200 bg-rose-50 text-rose-700">
+                <AlertCircle size={12} />
+                {failedCount} failed
+              </span>
+            )}
+
+            {highlights.length === 0 && !hasPending && (
+              <span className="text-xs text-slate-400">No highlights yet</span>
             )}
           </div>
+
+          {activeMission && (
+            <div className="text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2">
+              {activeMission}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -142,7 +208,7 @@ function NoteCard({ note }) {
   )
 }
 
-export default function WorkspaceView({ workspace, onPageClick, onHighlightClick, highlightInProgress = {} }) {
+export default function WorkspaceView({ workspace, onPageClick, highlightInProgress = {} }) {
   if (!workspace) {
     return (
       <div className="flex-1 flex items-center justify-center text-slate-400 bg-gradient-to-br from-white to-slate-50">
@@ -180,14 +246,13 @@ export default function WorkspaceView({ workspace, onPageClick, onHighlightClick
           <section className="space-y-4">
             {pages.map((p) => {
               const progress = highlightInProgress[`${meta.slug}:${p.page_name}`]
+              const pendingOverlayCount = Array.isArray(progress) ? progress.length : 0
               return (
                 <PageCard
                   key={p.page_name}
-                  workspaceSlug={meta.slug}
                   page={p}
                   onPageClick={onPageClick}
-                  onHighlightClick={onHighlightClick}
-                  isHighlighting={Boolean(progress)}
+                  pendingOverlayCount={pendingOverlayCount}
                 />
               )
             })}

@@ -1,7 +1,7 @@
 {
   "strategy": "Start broad, drill deep. Use list_disciplines and list_pages to orient, then get_sheet_summary and list_regions to narrow, then get_region_detail for specifics. Use knowledge tools to decide what belongs in scope, then use workspace tools (create_workspace, list_workspaces, get_workspace, add_page, add_description, remove_page, add_note, remove_highlight) to manage curated workspace state.",
   "search_tips": "Use search() for cross-cutting queries across all pages. Check find_cross_references() when a question spans multiple sheets.",
-  "vision_strategy": "Use see_page to look at plans yourself — you see the image directly. Use highlight_on_page to generate Gemini visual overlays for workspace pages when mission-specific visual marking is needed.",
+  "vision_strategy": "Use highlight_pages to spawn async Gemini highlight agents for one or more workspace pages. Results stream back as bbox overlays in the workspace as they complete.",
   "learning_strategy": "Use update_experience for behavioral lessons and discipline knowledge. Use update_tool_description for tool usage tips. Use update_knowledge to correct or enrich the knowledge store directly.",
   "gaps_strategy": "Run check_gaps() periodically to identify broken cross-references and regions missing deep analysis."
 }

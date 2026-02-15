@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import sys
-import tempfile
 import unittest
 import uuid
 from pathlib import Path
@@ -167,16 +166,11 @@ class WorkspaceToolsTests(unittest.TestCase):
         workspaces.create_workspace("Walk-In Cooler Install", "Equipment scope")
         workspaces.add_page("walk_in_cooler_install", "K_211")
 
-        tmpdir = Path(tempfile.mkdtemp(prefix="maestro_tool_highlight_"))
-        image_path = tmpdir / "h.png"
-        image_path.write_bytes(b"fakepng")
-
         added = repo.add_highlight(
             self.pid,
             "walk_in_cooler_install",
             "K_211_ENLARGED_EQUIPMENT_FLOOR_PLAN_p001",
             "Find rough-in",
-            str(image_path),
         )
         self.assertIsInstance(added, dict)
 

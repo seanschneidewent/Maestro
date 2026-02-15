@@ -73,10 +73,10 @@ Maestro/
 │   │   ├── conversation.py   # The one continuous thread — DB-backed + compaction
 │   │   └── sendblue.py       # iMessage API (send, typing indicator, formatting)
 │   │
-│   ├── tools/                # What Maestro can do (30 tools)
+│   ├── tools/                # What Maestro can do (29 tools)
 │   │   ├── registry.py       # Master tool list — single source of truth
 │   │   ├── knowledge.py      # 10 tools — search, read, cross-reference
-│   │   ├── vision.py         # 2 tools — see pages + workspace highlights via Gemini
+│   │   ├── vision.py         # 1 tool — async Gemini workspace highlights (bbox overlays)
 │   │   ├── workspaces.py     # 8 tools — workspace CRUD + descriptions/highlights (→ DB)
 │   │   ├── schedule.py       # 6 tools — schedule management (→ DB)
 │   │   └── learning.py       # 3 tools — experience updates + audit log (→ DB)
@@ -128,7 +128,7 @@ Maestro/
 | `projects` | One row per project (id, name, path) |
 | `workspaces` | Grouped page collections with status |
 | `workspace_pages` | Pages assigned to workspaces (with per-page description) |
-| `workspace_highlights` | Gemini-generated highlight layers attached to workspace pages |
+| `workspace_highlights` | Async highlight jobs attached to workspace pages (`pending/complete/failed` + normalized bboxes) |
 | `workspace_notes` | Notes/findings attached to workspaces |
 | `schedule_events` | Timeline events (phases, milestones, deadlines) |
 | `messages` | Every message as individual rows (queryable, pageable) |
@@ -213,7 +213,7 @@ Super texts "switch to flash"
 All under `/api`, powered by the database + in-memory knowledge store:
 
 - **Project:** `GET /project` — metadata + knowledge stats + active engine
-- **Workspaces:** `GET /workspaces`, `GET /workspaces/:slug`, `GET /workspaces/:slug/highlight/:highlight_id` — list/detail + highlight image bytes
+- **Workspaces:** `GET /workspaces`, `GET /workspaces/:slug` — list/detail with highlight status + bbox overlays
 - **Schedule:** `GET /schedule`, `GET /schedule/upcoming?days=N`, `GET /schedule/:id`
 - **Conversation:** `GET /conversation` (state + stats), `GET /conversation/messages?limit=N&before=ID`
 - **Knowledge:** `GET /knowledge/disciplines`, `GET /knowledge/pages?discipline=X`, `GET /knowledge/pages/:name`, `GET /knowledge/search?q=X`

@@ -47,13 +47,28 @@ export default function App() {
       loadWorkspaces()
 
       const eventKey = `${data.workspace_slug}:${data.page_name || ''}`
+      const hid = Number.isInteger(data.highlight_id) ? data.highlight_id : null
       if (data.action === 'page_highlight_started' && data.page_name) {
-        setHighlightInProgress(prev => ({ ...prev, [eventKey]: data.mission || '' }))
-      }
-      if ((data.action === 'page_highlight_complete' || data.action === 'highlight_removed') && data.page_name) {
         setHighlightInProgress(prev => {
+          const existing = Array.isArray(prev[eventKey]) ? prev[eventKey] : []
+          const nextIds = hid == null || existing.includes(hid) ? existing : [...existing, hid]
+          return { ...prev, [eventKey]: nextIds.length ? nextIds : existing }
+        })
+      }
+      if ((data.action === 'page_highlight_complete' || data.action === 'page_highlight_failed' || data.action === 'highlight_removed') && data.page_name) {
+        setHighlightInProgress(prev => {
+          const existing = Array.isArray(prev[eventKey]) ? prev[eventKey] : []
           const next = { ...prev }
-          delete next[eventKey]
+          if (hid == null) {
+            delete next[eventKey]
+            return next
+          }
+          const filtered = existing.filter(id => id !== hid)
+          if (filtered.length === 0) {
+            delete next[eventKey]
+          } else {
+            next[eventKey] = filtered
+          }
           return next
         })
       }
@@ -72,10 +87,6 @@ export default function App() {
     } catch (e) {
       console.error('Failed to load page image:', e)
     }
-  }, [])
-
-  const openHighlight = useCallback(({ title, imageUrl }) => {
-    setViewingAsset({ title, image_url: imageUrl })
   }, [])
 
   return (
@@ -107,7 +118,6 @@ export default function App() {
         <WorkspaceView
           workspace={activeWorkspace ? workspaceDetail : null}
           onPageClick={openPage}
-          onHighlightClick={openHighlight}
           highlightInProgress={highlightInProgress}
         />
       </div>

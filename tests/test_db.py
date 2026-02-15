@@ -5,7 +5,6 @@
 
 import sys
 import os
-import tempfile
 from pathlib import Path
 
 # Add project root to path
@@ -127,22 +126,35 @@ test("add_description success", isinstance(desc, dict) and desc["description"] =
 desc2 = repo.add_description(PID, "foundation_framing", "S-101", "")
 test("clear_description success", isinstance(desc2, dict) and desc2["description"] == "")
 
-# Highlight add/get/remove
-tmpdir = Path(tempfile.mkdtemp(prefix="maestro_highlight_test_"))
-highlight_file = tmpdir / "s101_highlight.png"
-highlight_file.write_bytes(b"fakepng")
-
-h = repo.add_highlight(PID, "foundation_framing", "S-101", "Find sleeves", str(highlight_file))
+# Highlight add/complete/fail/get/remove
+h = repo.add_highlight(PID, "foundation_framing", "S-101", "Find sleeves")
 test("add_highlight success", isinstance(h, dict) and isinstance(h["highlight"].get("id"), int))
+test("add_highlight pending status", isinstance(h, dict) and h["highlight"].get("status") == "pending")
+test("add_highlight empty bboxes", isinstance(h, dict) and h["highlight"].get("bboxes") == [])
 
 hid = h["highlight"]["id"] if isinstance(h, dict) else -1
+
+completed = repo.complete_highlight(
+    hid,
+    [{"x": 0.1, "y": 0.2, "width": 0.3, "height": 0.1}],
+)
+test("complete_highlight success", isinstance(completed, dict) and completed.get("status") == "complete")
+test("complete_highlight has bbox", isinstance(completed, dict) and len(completed.get("bboxes", [])) == 1)
+
 got_h = repo.get_highlight(PID, "foundation_framing", hid)
 test("get_highlight success", got_h is not None and got_h["id"] == hid)
+test("get_highlight status", got_h is not None and got_h["status"] == "complete")
+test("get_highlight bboxes", got_h is not None and len(got_h["bboxes"]) == 1)
 
 ws_full = repo.get_workspace(PID, "foundation_framing")
 s101 = [p for p in ws_full["pages"] if p["page_name"] == "S-101"][0]
 test("workspace payload includes highlights", len(s101["highlights"]) == 1 and s101["highlights"][0]["id"] == hid)
+test("workspace payload highlight status", s101["highlights"][0]["status"] == "complete")
+test("workspace payload highlight bboxes", len(s101["highlights"][0]["bboxes"]) == 1)
 test("highlight has timestamp", bool(s101["highlights"][0]["created_at"]))
+
+failed_highlight = repo.fail_highlight(hid)
+test("fail_highlight success", isinstance(failed_highlight, dict) and failed_highlight.get("status") == "failed")
 
 removed_h = repo.remove_highlight(PID, "foundation_framing", "S-101", hid)
 test("remove_highlight success", isinstance(removed_h, dict) and removed_h["removed"] is True)

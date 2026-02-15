@@ -7,7 +7,6 @@
 
 import sys
 import os
-import tempfile
 from pathlib import Path
 
 PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
@@ -36,11 +35,12 @@ repo.add_description(PID, "foundation_framing", "S-101", "Structural foundation"
 repo.add_note(PID, "foundation_framing", "Pipe sleeves missing from structural sheets", source_page="VC-201")
 repo.add_note(PID, "foundation_framing", "Epoxy anchor inspection required")
 
-HIGHLIGHT_DIR = Path(tempfile.mkdtemp(prefix="maestro_api_highlights_"))
-HIGHLIGHT_PATH = HIGHLIGHT_DIR / "foundation_highlight.png"
-HIGHLIGHT_PATH.write_bytes(b"fakepng")
-_highlight = repo.add_highlight(PID, "foundation_framing", "S-101", "Find pipe sleeves", str(HIGHLIGHT_PATH))
+_highlight = repo.add_highlight(PID, "foundation_framing", "S-101", "Find pipe sleeves")
 HIGHLIGHT_ID = _highlight["highlight"]["id"] if isinstance(_highlight, dict) else -1
+repo.complete_highlight(
+    HIGHLIGHT_ID,
+    [{"x": 0.15, "y": 0.2, "width": 0.12, "height": 0.08}],
+)
 
 # Schedule
 repo.add_event(PID, "Foundation Pour", "2026-02-20", event_type="milestone")
@@ -183,6 +183,8 @@ test("workspace notes", len(data["notes"]) == 2)
 s101 = [p for p in data["pages"] if p["page_name"] == "S-101"][0]
 test("workspace page has description", s101.get("description", "") == "Structural foundation")
 test("workspace page has highlights", isinstance(s101.get("highlights", []), list))
+test("workspace highlight has status", s101["highlights"][0]["status"] == "complete")
+test("workspace highlight has bboxes", len(s101["highlights"][0]["bboxes"]) == 1)
 test("note has text", data["notes"][0]["text"].startswith("Pipe sleeves"))
 
 # Slug resolution (by title-ish)
@@ -193,13 +195,9 @@ test("workspace slug resolve", r2.status_code == 200)
 r3 = client.get("/api/workspaces/nonexistent")
 test("workspace 404", r3.status_code == 404)
 
-# Workspace highlight endpoint
+# Workspace highlight endpoint removed
 r4 = client.get(f"/api/workspaces/foundation_framing/highlight/{HIGHLIGHT_ID}")
-test("workspace highlight 200", r4.status_code == 200)
-test("workspace highlight png", r4.headers.get("content-type", "").startswith("image/png"))
-
-r5 = client.get("/api/workspaces/foundation_framing/highlight/999999")
-test("workspace highlight 404", r5.status_code == 404)
+test("workspace highlight route removed", r4.status_code == 404)
 
 # ===================================================================
 print("\n== /api/schedule ==")

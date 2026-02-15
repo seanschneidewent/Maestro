@@ -29,7 +29,6 @@ export const api = {
   // Workspaces
   listWorkspaces: () => request('/api/workspaces'),
   getWorkspace: (slug) => request(`/api/workspaces/${slug}`),
-  getWorkspaceHighlightUrl: (slug, highlightId) => `/api/workspaces/${encodeURIComponent(slug)}/highlight/${highlightId}`,
 
   // Schedule
   listEvents: (params) => {

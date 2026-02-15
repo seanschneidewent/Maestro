@@ -105,7 +105,8 @@ class WorkspaceHighlight(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     workspace_page_id = Column(Integer, ForeignKey("workspace_pages.id"), nullable=False)
     mission = Column(Text, nullable=False)
-    image_path = Column(Text, nullable=False)
+    status = Column(String(20), default="pending")  # pending | complete | failed
+    bboxes = Column(Text, default="[]")  # JSON list of normalized {x, y, width, height}
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     # Relationships
