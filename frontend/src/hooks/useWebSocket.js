@@ -3,7 +3,10 @@ import { useEffect, useRef } from 'react'
 export function useWebSocket({ onWorkspace, onMessage, onFinding } = {}) {
   const wsRef = useRef(null)
   const handlersRef = useRef({ onWorkspace, onMessage, onFinding })
-  handlersRef.current = { onWorkspace, onMessage, onFinding }
+
+  useEffect(() => {
+    handlersRef.current = { onWorkspace, onMessage, onFinding }
+  }, [onWorkspace, onMessage, onFinding])
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
@@ -22,7 +25,9 @@ export function useWebSocket({ onWorkspace, onMessage, onFinding } = {}) {
           if (data.type === 'workspace' && h.onWorkspace) h.onWorkspace(data)
           if (data.type === 'message' && h.onMessage) h.onMessage(data)
           if (data.type === 'finding' && h.onFinding) h.onFinding(data)
-        } catch {}
+        } catch (error) {
+          console.error('Invalid WebSocket event payload', error)
+        }
       }
 
       ws.onclose = () => {

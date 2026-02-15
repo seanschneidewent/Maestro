@@ -267,9 +267,14 @@ test("disciplines 200", r.status_code == 200)
 data = r.json()
 test("3 disciplines", len(data["disciplines"]) == 3)
 names = {d["name"] for d in data["disciplines"]}
-test("discipline names", names == {"Structural", "Architectural", "Mechanical"})
+test("discipline names", names == {"Structural", "Architectural", "MEP"})
 structural = [d for d in data["disciplines"] if d["name"] == "Structural"][0]
 test("structural count", structural["page_count"] == 1)
+mep = [d for d in data["disciplines"] if d["name"] == "MEP"][0]
+test(
+    "mep has mechanical child",
+    any(c["name"] == "Mechanical" and c["page_count"] == 1 for c in mep.get("children", [])),
+)
 
 # ===================================================================
 print("\n== /api/knowledge/pages ==")

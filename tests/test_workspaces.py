@@ -11,7 +11,7 @@ MAESTRO_DIR = Path(__file__).resolve().parents[1]
 if str(MAESTRO_DIR) not in sys.path:
     sys.path.insert(0, str(MAESTRO_DIR))
 
-from tools import workspaces
+from maestro.tools import workspaces
 
 
 class WorkspaceToolsTests(unittest.TestCase):

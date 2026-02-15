@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { api } from '../lib/api'
 import { on } from '../lib/websocket'
@@ -10,12 +10,12 @@ export default function WorkspaceDetail() {
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('notes')
 
-  const load = () => {
+  const load = useCallback(() => {
     api.getWorkspace(slug)
       .then(setWorkspace)
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
-  }
+  }, [slug])
 
   useEffect(() => {
     load()
@@ -23,7 +23,7 @@ export default function WorkspaceDetail() {
       if (evt.workspace_slug === slug) load()
     })
     return unsub
-  }, [slug])
+  }, [slug, load])
 
   if (loading) return <div className="p-4 text-maestro-500">Loading...</div>
   if (error) return <div className="p-4 text-danger">{error}</div>

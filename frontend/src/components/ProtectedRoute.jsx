@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 
 // Skip auth in dev mode — remove this for production
 const DEV_BYPASS = import.meta.env.DEV

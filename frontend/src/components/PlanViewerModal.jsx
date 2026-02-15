@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { TransformWrapper, TransformComponent, useControls } from 'react-zoom-pan-pinch'
 import { X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react'
 

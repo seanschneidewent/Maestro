@@ -25,17 +25,18 @@ export default function App() {
   const loadWorkspaces = useCallback(() => {
     api.listWorkspaces().then(ws => {
       setWorkspaces(ws)
-      if (!activeWorkspace && ws.length > 0) {
-        setActiveWorkspace(ws[0].slug)
+      setActiveWorkspace(current => current ?? (ws[0]?.slug ?? null))
+      if (ws.length === 0) {
+        setWorkspaceDetail(null)
       }
     }).catch(console.error)
-  }, [activeWorkspace])
+  }, [])
 
-  useEffect(() => { loadWorkspaces() }, [])
+  useEffect(() => { loadWorkspaces() }, [loadWorkspaces])
 
   // Load workspace detail when active changes
   useEffect(() => {
-    if (!activeWorkspace) { setWorkspaceDetail(null); return }
+    if (!activeWorkspace) return
     api.getWorkspace(activeWorkspace).then(setWorkspaceDetail).catch(console.error)
   }, [activeWorkspace])
 
@@ -85,7 +86,7 @@ export default function App() {
       </div>
 
       <div className="flex-1 overflow-hidden flex flex-col">
-        <WorkspaceView workspace={workspaceDetail} onPageClick={openPage} />
+        <WorkspaceView workspace={activeWorkspace ? workspaceDetail : null} onPageClick={openPage} />
       </div>
 
       {/* Right panel */}

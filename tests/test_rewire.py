@@ -9,6 +9,8 @@
 
 import sys
 import os
+import atexit
+import tempfile
 from pathlib import Path
 
 PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
@@ -69,8 +71,24 @@ from maestro.tools.workspaces import (
     remove_page,
     add_note,
 )
+from maestro.tools import workspaces as workspaces_module
 
-init_workspaces(MOCK_PROJECT, project_id=PID)
+_workspace_tmp = tempfile.TemporaryDirectory()
+_orig_workspaces_dir = workspaces_module.WORKSPACES_DIR
+_orig_workspaces_index_path = workspaces_module.WORKSPACES_INDEX_PATH
+workspaces_module.WORKSPACES_DIR = Path(_workspace_tmp.name) / "workspaces"
+workspaces_module.WORKSPACES_INDEX_PATH = workspaces_module.WORKSPACES_DIR / "workspaces.json"
+
+
+def _cleanup_workspace_tempdir() -> None:
+    workspaces_module.WORKSPACES_DIR = _orig_workspaces_dir
+    workspaces_module.WORKSPACES_INDEX_PATH = _orig_workspaces_index_path
+    _workspace_tmp.cleanup()
+
+
+atexit.register(_cleanup_workspace_tempdir)
+
+init_workspaces(MOCK_PROJECT)
 
 # --- create_workspace ---
 print("\n  -- create_workspace --")
@@ -206,17 +224,10 @@ test("note text correct", ws_final["notes"][0]["text"].startswith("3-inch pipe s
 
 # --- No project loaded ---
 print("\n  -- no project edge cases --")
-init_workspaces(None, project_id=PID)
+init_workspaces(None)
 test("add_page no project", isinstance(add_page("foundation_framing", "S-101", "test"), str) and "No project" in add_page("foundation_framing", "S-101", "test"))
 # Restore
-init_workspaces(MOCK_PROJECT, project_id=PID)
-
-# No project_id
-init_workspaces(MOCK_PROJECT, project_id=None)
-test("create_workspace no pid", isinstance(create_workspace("Test", "Test"), str))
-test("list_workspaces no pid", isinstance(list_workspaces(), str))
-# Restore
-init_workspaces(MOCK_PROJECT, project_id=PID)
+init_workspaces(MOCK_PROJECT)
 
 
 # ===================================================================

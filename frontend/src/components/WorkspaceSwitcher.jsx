@@ -1,28 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
-import { Layers, Plus, Loader2, CheckCircle2, PanelRightClose } from 'lucide-react'
-import { api } from '../lib/api'
-import { useWebSocket } from '../hooks/useWebSocket'
+import { Layers, CheckCircle2, PanelRightClose } from 'lucide-react'
 
-export default function WorkspaceSwitcher({ activeSlug, onSelect, onCollapse }) {
-  const [workspaces, setWorkspaces] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  const load = useCallback(async () => {
-    try {
-      const data = await api.listWorkspaces()
-      setWorkspaces(Array.isArray(data) ? data : [])
-    } catch (e) {
-      console.error('Failed to load workspaces', e)
-    }
-    setLoading(false)
-  }, [])
-
-  useEffect(() => { load() }, [load])
-
-  // Refresh on workspace events
-  useWebSocket('workspace', useCallback((data) => {
-    if (data.action === 'created') load()
-  }, [load]))
+export default function WorkspaceSwitcher({ workspaces = [], activeSlug, onSelect, onCollapse }) {
 
   return (
     <div className="w-80 border-l border-slate-200 bg-white flex flex-col h-full">
@@ -42,11 +20,7 @@ export default function WorkspaceSwitcher({ activeSlug, onSelect, onCollapse }) 
 
       {/* List */}
       <div className="flex-1 overflow-y-auto py-2">
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 size={18} className="animate-spin text-slate-400" />
-          </div>
-        ) : workspaces.length === 0 ? (
+        {workspaces.length === 0 ? (
           <div className="px-4 py-8 text-center text-slate-400">
             <Layers size={32} className="mx-auto mb-2 opacity-40" />
             <p className="text-xs">No workspaces yet</p>
